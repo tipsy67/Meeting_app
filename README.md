@@ -1,1 +1,1 @@
-Application for freindly meetengs
+Application for friendly meetings
