@@ -2,12 +2,14 @@ from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 
+from tg_app.bot.databases.sql_requests import set_user
 from tg_app.bot.keyboards import userkb
 
 user = Router ()
 
 @user.message(CommandStart())
 async def start(message: Message):
+    await set_user(message.from_user.id)
     await message.answer('Links bellow', reply_markup=userkb.main)
 
 @user.callback_query(F.data=='menu')
