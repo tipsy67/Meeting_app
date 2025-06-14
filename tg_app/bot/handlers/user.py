@@ -2,6 +2,8 @@ import os
 
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
 from tg_app.bot.databases.sql_requests import set_user
@@ -9,29 +11,46 @@ from tg_app.bot.keyboards import userkb
 
 user = Router ()
 
+class Choice(StatesGroup):
+    select_amount = State()
+
 @user.message(CommandStart())
 async def start(message: Message):
     await set_user(message.from_user.id)
     await message.answer('Links bellow', reply_markup=userkb.main)
 
 @user.callback_query(F.data=='donate')
-async def top_up(callback_query: CallbackQuery):
-        await callback_query.bot.send_invoice(
-        callback_query.from_user.id,
-        title="Подписка на бота",
-        description="Активация подписки на бота на 1 месяц",
-        provider_token=(os.getenv('TG_PAYMASTER')),
-        currency="rub",
-        photo_url="https://cs15.pikabu.ru/post_img/big/2024/08/24/10/1724515420160483017.png",
-        photo_width=416,
-        photo_height=234,
-        photo_size=416,
-        is_flexible=False,
-        prices=[
-            LabeledPrice(label='Подписка на бота (1 месяц)', amount=30000)
-        ],
-        start_parameter="",
-        payload="test-invoice-payload")
+async def top_up(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.reply(
+        text="Введите сумму, которую вы хотите пополнить:",
+        reply_to_message_id=callback_query.message.message_id
+    )
+    await callback_query.answer()
+    await state.set_state(Choice.select_amount)
+
+
+@user.message(Choice.select_amount)
+async def donation_amount(message: Message, state: FSMContext):
+    try:
+        amount = int(message.text)
+        if amount < 10:
+            await message.answer("Минимальная сумма пополнения — 10 рублей. Попробуйте снова.")
+            return
+        amount_in_cents = amount * 100
+
+        await message.bot.send_invoice(
+            chat_id=message.from_user.id,
+            title="Пополнение",
+            description=f"Ваше пополнение на сумму {amount} руб.",
+            provider_token=os.getenv('TG_PAYMASTER'),
+            currency="rub",
+            prices=[LabeledPrice(label="Пополнение", amount=amount_in_cents)],
+            payload="donation"
+        )
+        await state.clear()
+
+    except ValueError:
+        await message.answer("Введите корректное число (целое число больше 10).")
 
 @user.callback_query(F.data=='menu')
 async def menu (callback_query: CallbackQuery):
