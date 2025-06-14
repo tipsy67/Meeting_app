@@ -748,4 +748,4 @@ cython_debug/
 poetry.lock
 pyproject.toml
 
-!/tg_app/bot/db.sqlite3
+/tg_app/bot/db.sqlite3
