@@ -1,8 +1,45 @@
+from logging.config import listen
+
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-main = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Menu', callback_data='menu')],
-    [InlineKeyboardButton(text='Order', callback_data='order')],
-    [InlineKeyboardButton(text='Profile', callback_data='profile')],
-    [InlineKeyboardButton(text='Donate', callback_data='donate')],
-])
+def get_main_keyboard(l10n) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=l10n.format_value('kb_main_speaker'),
+                    callback_data='kb_main_speaker'
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=l10n.format_value('kb_main_listener'),
+                    callback_data='kb_main_listener'
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=l10n.format_value('kb_main_help'),
+                    callback_data='kb_main_help'
+                )
+            ],
+        ]
+    )
+
+def get_unblock_keyboard(l10n) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=l10n.format_value('kb_unblock'),
+                    callback_data='kb_unblock'
+                )
+            ],
+        ]
+    )
+
+def get_speaker_keyboard(l10n) -> InlineKeyboardMarkup:
+    pass
+
+def get_listener_keyboard(l10n) -> InlineKeyboardMarkup:
+    pass

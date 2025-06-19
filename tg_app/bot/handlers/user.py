@@ -8,7 +8,7 @@ from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
 from tg_app.bot.databases.mongo_requests import set_user
 from tg_app.bot.keyboards import userkb
-# from aiogram.utils.i18n import gettext as _
+
 
 
 user = Router ()
@@ -18,9 +18,18 @@ class Choice(StatesGroup):
 
 @user.message(CommandStart())
 async def start(message: Message, l10n):
-    await set_user(message.from_user)
-    print(message.from_user)
-    await message.answer(l10n.format_value('welcome'), reply_markup=userkb.main)
+    user_tg=await set_user(message.from_user)
+    text = user_tg.get('is_blocked')
+    if text:
+        await message.answer(l10n.format_value('blocked')+f'\n{text}', reply_markup=userkb.get_unblock_keyboard(l10n))
+        return
+    if user_tg.get('is_speaker'):
+        await message.answer(l10n.format_value('welcome'), reply_markup=userkb.get_speaker_keyboard(l10n))
+        return
+    if user_tg.get('is_listener'):
+        await message.answer(l10n.format_value('welcome'), reply_markup=userkb.get_listener_keyboard(l10n))
+        return
+    await message.answer(l10n.format_value('welcome'), reply_markup=userkb.get_main_keyboard(l10n))
 
 @user.callback_query(F.data=='donate')
 async def top_up(callback_query: CallbackQuery, state: FSMContext):
