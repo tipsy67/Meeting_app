@@ -8,9 +8,8 @@ from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
 from tg_app.bot.databases.mongo_requests import set_user
 from tg_app.bot.keyboards import userkb
-from aiogram.utils.i18n import gettext as _
+# from aiogram.utils.i18n import gettext as _
 
-from tg_app.bot.middlewares.language import i18n
 
 user = Router ()
 
@@ -18,12 +17,10 @@ class Choice(StatesGroup):
     select_amount = State()
 
 @user.message(CommandStart())
-async def start(message: Message):
+async def start(message: Message, l10n):
     await set_user(message.from_user)
-    print(f"Available locales: {i18n.available_locales}")
-    print(f"Current locale: {i18n.ctx_locale.get()}")
-    print(os.path.exists("locales/en/messages.ftl"))
-    await message.answer(_('welcome'), reply_markup=userkb.main)
+    print(message.from_user)
+    await message.answer(l10n.format_value('welcome'), reply_markup=userkb.main)
 
 @user.callback_query(F.data=='donate')
 async def top_up(callback_query: CallbackQuery, state: FSMContext):
