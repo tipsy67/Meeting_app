@@ -28,3 +28,6 @@ async def set_user(user) -> dict:
         return_document=ReturnDocument.AFTER
     )
     return user
+
+async def get_speakers():
+    pass
