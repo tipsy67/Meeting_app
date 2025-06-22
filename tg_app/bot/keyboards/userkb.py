@@ -10,7 +10,7 @@ def create_buttons(l10n, buttons_data: list[tuple[str, str]]) -> InlineKeyboardM
             callback_data=callback_key
         )] for text_key, callback_key in buttons_data
     ]
-    print(keyboard_buttons)
+    # print(keyboard_buttons)
     return InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
 
 def get_main_keyboard(l10n) -> InlineKeyboardMarkup:
@@ -38,6 +38,7 @@ def get_speaker_keyboard(l10n) -> InlineKeyboardMarkup:
 
 
 def get_listener_keyboard(l10n, speakers: list[str]) -> InlineKeyboardMarkup:
-    buttons_data = [ (f'{user.get('username')}({user.get('full_name')})', str(user.get('_id'))) for user in speakers]
+    buttons_data = [ (f'{user.get('username')}({user.get('full_name')})',
+                      str(user.get('_id'))) for user in speakers]
 
     return create_buttons(None, buttons_data)

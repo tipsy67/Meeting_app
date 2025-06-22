@@ -1,7 +1,5 @@
 import asyncio
 import os
-import re
-from pathlib import Path
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart, CommandObject

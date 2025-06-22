@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
-from tg_app.bot.databases.mongo_requests import set_user, get_speakers
+from tg_app.bot.databases.api_requests import set_user, get_speakers
 from tg_app.bot.keyboards import userkb
 
 
@@ -19,16 +19,23 @@ class Choice(StatesGroup):
 @user.message(CommandStart())
 async def start(message: Message, l10n):
     user_tg = await set_user(message.from_user)
+
+    err = user_tg.get('status')
+    if err is not None:
+        await message.answer(err)
+        return
+
     text = user_tg.get('is_blocked')
     if text:
         await message.answer(l10n.format_value('blocked')+f'\n{text}', reply_markup=userkb.get_unblock_keyboard(l10n))
         return
+
     await message.answer(l10n.format_value('welcome'), reply_markup=userkb.get_main_keyboard(l10n))
 
 @user.callback_query(F.data=='kb_main_listener')
 async def choose_speaker(callback: CallbackQuery, l10n):
     speakers = await get_speakers()
-    await callback.message.edit_text(
+    await callback.message.answer(
         l10n.format_value('speakers'), reply_markup=userkb.get_listener_keyboard(l10n, speakers))
     await callback.answer()
 
