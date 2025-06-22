@@ -6,3 +6,5 @@ kb_main_help = Help me
 
 blocked = Your account has been blocked due to:
 kb_unblock = Unblock
+
+speakers = Choose speaker

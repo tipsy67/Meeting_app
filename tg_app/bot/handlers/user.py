@@ -25,10 +25,12 @@ async def start(message: Message, l10n):
         return
     await message.answer(l10n.format_value('welcome'), reply_markup=userkb.get_main_keyboard(l10n))
 
-@user.callback_query(F.data==['kb_main_listener'])
-async def choose_speaker(message: Message, l10n):
+@user.callback_query(F.data=='kb_main_listener')
+async def choose_speaker(callback: CallbackQuery, l10n):
     speakers = await get_speakers()
-    await message.answer(l10n.format_value('welcome'), reply_markup=userkb.get_listener_keyboard(l10n, speakers))
+    await callback.message.edit_text(
+        l10n.format_value('speakers'), reply_markup=userkb.get_listener_keyboard(l10n, speakers))
+    await callback.answer()
 
 @user.callback_query(F.data=='donate')
 async def top_up(callback_query: CallbackQuery, state: FSMContext):

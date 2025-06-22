@@ -17,6 +17,8 @@ async def set_user(user) -> dict:
 {"_id": user.id},
         {"$set": {
             "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
             "last_activity": now,
             },
             "$setOnInsert": {
@@ -30,4 +32,23 @@ async def set_user(user) -> dict:
     return user
 
 async def get_speakers():
-    pass
+    pipeline = [
+        {"$match": {"is_speaker": True}},
+
+        {"$project": {
+            "username": 1,
+            "full_name": {
+                "$concat": [
+                    "$first_name",
+                    " ",
+                    "$last_name"
+                ]
+            },
+            "_id": 1
+        }}
+    ]
+
+    speakers_cursor = await users_collection.aggregate(pipeline)
+    speakers = await speakers_cursor.to_list(length=None)
+
+    return speakers
