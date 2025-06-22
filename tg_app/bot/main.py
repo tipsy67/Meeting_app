@@ -2,8 +2,6 @@ import asyncio
 import os
 
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart, CommandObject
-from aiogram.types import Message
 from dotenv import load_dotenv
 
 from tg_app.bot.databases.sql_models import async_main

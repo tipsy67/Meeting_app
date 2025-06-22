@@ -9,7 +9,10 @@ from fluent.runtime.fallback import FluentResourceLoader, FluentLocalization
 
 class FluentL10nMiddleware(BaseMiddleware):
     def __init__(self, locales_dir):
-        self.loader = FluentResourceLoader(f"{locales_dir}/{{locale}}")
+        # print(os.getcwd())
+        base_dir = Path(__file__).resolve().parent.parent
+        abs_locales_dir = os.path.join(base_dir, locales_dir)
+        self.loader = FluentResourceLoader(f"{abs_locales_dir}/{{locale}}")
         self.l10ns = {
             'en': FluentLocalization(['en'], ['messages.ftl'], self.loader),
             'ru': FluentLocalization(['ru'], ['messages.ftl'], self.loader),
@@ -19,9 +22,17 @@ class FluentL10nMiddleware(BaseMiddleware):
 
     async def __call__(self, handler, event, data):
         user_locale = self.default_locale
-        if hasattr(event.message, 'from_user') and event.message.from_user:
-            if event.message.from_user.language_code:
-                user_locale = event.message.from_user.language_code.split('-')[0].lower()
+
+        user = None
+        if hasattr(event, 'from_user'):  # Для inline-запросов
+            user = event.from_user
+        elif hasattr(event, 'message') and event.message:  # Для обычных сообщений
+            user = event.message.from_user
+        elif hasattr(event, 'callback_query') and event.callback_query:  # Для callback-запросов
+            user = event.callback_query.from_user
+
+        if user and user.language_code:
+            user_locale = user.language_code.split('-')[0].lower()
 
         if user_locale not in self.supported_locales:
             user_locale = self.default_locale

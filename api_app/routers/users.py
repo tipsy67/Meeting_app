@@ -16,11 +16,11 @@ async def create_user(tg_user: UserCreateUpdate):
     return await set_user(tg_user)
 
 
-@router.put('/')
+@router.put('')
 async def update_user():
     pass
 
 
-@router.delete('/')
+@router.delete('')
 async def delete_user():
     pass
