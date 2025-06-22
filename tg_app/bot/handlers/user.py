@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
-from tg_app.bot.databases.api_requests import set_user, get_speakers
+from tg_app.bot.databases.api_requests import set_user, get_speakers, add_speaker
 from tg_app.bot.keyboards import userkb
 
 
@@ -20,9 +20,9 @@ class Choice(StatesGroup):
 async def start(message: Message, l10n):
     user_tg = await set_user(message.from_user)
 
-    err = user_tg.get('status')
+    err = user_tg.get('error')
     if err is not None:
-        await message.answer(err)
+        await message.answer(f'{err}: {user_tg.get('detail')}')
         return
 
     text = user_tg.get('is_blocked')
@@ -38,6 +38,20 @@ async def choose_speaker(callback: CallbackQuery, l10n):
     await callback.message.answer(
         l10n.format_value('speakers'), reply_markup=userkb.get_listener_keyboard(l10n, speakers))
     await callback.answer()
+
+@user.callback_query(F.data.startswith('add:speaker:'))
+async def choose_speaker(callback: CallbackQuery, l10n):
+    _, _, speaker_id = callback.data.split(':')
+    response = await add_speaker(int(speaker_id), callback.message.from_user.id)
+    err = response.get('error')
+    if err is not None:
+        await callback.message.answer(f'{err}: {response.get('detail')}')
+        await callback.answer()
+        return
+    # await callback.message.answer()
+    await callback.message.answer('!!!!')
+    await callback.answer()
+
 
 @user.callback_query(F.data=='donate')
 async def top_up(callback_query: CallbackQuery, state: FSMContext):

@@ -39,6 +39,6 @@ def get_speaker_keyboard(l10n) -> InlineKeyboardMarkup:
 
 def get_listener_keyboard(l10n, speakers: list[str]) -> InlineKeyboardMarkup:
     buttons_data = [ (f'{user.get('username')}({user.get('full_name')})',
-                      str(user.get('_id'))) for user in speakers]
+                      f'add:speaker:{str(user.get('_id'))}') for user in speakers]
 
     return create_buttons(None, buttons_data)

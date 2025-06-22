@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from bson import ObjectId
 from pydantic import BaseModel
 from typing_extensions import Optional
 
@@ -17,3 +19,12 @@ class UserResponse(UserCreateUpdate):
     is_admin: Optional[bool] = None
     is_speaker: Optional[bool] = None
     is_banned: Optional[str] = None
+
+class SpeakerListener(BaseModel):
+    speaker_id: int
+    listener_id: int
+
+class SpeakerListenerResponse(SpeakerListener):
+    created_at: datetime
+    class Config:
+        json_encoders = {ObjectId: str}
