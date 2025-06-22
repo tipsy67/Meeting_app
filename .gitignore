@@ -748,6 +748,9 @@ cython_debug/
 poetry.lock
 pyproject.toml
 
+
+/tg_app/bot/db.sqlite3
+
 # Created by https://www.toptal.com/developers/gitignore/api/macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos
 
@@ -785,3 +788,4 @@ Temporary Items
 *.icloud
 
 # End of https://www.toptal.com/developers/gitignore/api/macos
+
