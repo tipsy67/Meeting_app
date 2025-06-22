@@ -24,20 +24,18 @@ class FluentL10nMiddleware(BaseMiddleware):
         user_locale = self.default_locale
 
         user = None
-        if hasattr(event, 'from_user'):  # Для inline-запросов
+        if hasattr(event, 'from_user'):
             user = event.from_user
-        elif hasattr(event, 'message') and event.message:  # Для обычных сообщений
+        elif hasattr(event, 'message') and hasattr(event.message, 'from_user'):
             user = event.message.from_user
-        elif hasattr(event, 'callback_query') and event.callback_query:  # Для callback-запросов
+        elif hasattr(event, 'callback_query') and hasattr(event.callback_query, 'from_user'):
             user = event.callback_query.from_user
 
         if user and user.language_code:
             user_locale = user.language_code.split('-')[0].lower()
 
-        if user_locale not in self.supported_locales:
-            user_locale = self.default_locale
+        data["l10n"] = self.l10ns.get(user_locale, self.l10ns[self.default_locale])
 
-        data["l10n"] = self.l10ns[user_locale]
         return await handler(event, data)
 
 # Стандартные функции требуют бинарные файлы mo
