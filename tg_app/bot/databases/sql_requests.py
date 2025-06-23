@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from tg_app.bot.databases.sql_models import async_session, User
+from tg_app.bot.databases.sql_models import User, async_session
 
 
 async def set_user(tg_id):

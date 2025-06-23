@@ -1,5 +1,7 @@
 welcome = Добро пожаловать!
 
+kb_main_menu = Главное меню
+
 kb_main_speaker = Лекция
 kb_main_listener = Выбрать спикера
 kb_main_subscribe = Подписка
@@ -9,3 +11,11 @@ blocked = Ваш аккаунт заблокирован по причине:
 kb_unblock = Разблокировать
 
 speakers = Выберите спикера
+add_to_speaker = Вы добавлены к спикеру в лекторий
+
+kb_main_speaker = Лекция
+
+kb_new_lecture = Новая
+kb_open_lecture = Открыть
+
+listeners = Выберите слушателя
