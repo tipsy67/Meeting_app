@@ -1,4 +1,5 @@
 import os
+from typing import Annotated
 
 from aiogram import Bot, F, Router
 from aiogram.filters import CommandStart
@@ -61,15 +62,45 @@ async def choose_speaker(callback: CallbackQuery, l10n):
 
 @user.callback_query(F.data == 'kb_new_lecture')
 @delete_previous_message
-async def choose_speaker(callback: CallbackQuery, l10n):
+async def choose_speaker(callback: CallbackQuery, l10n, temp_data:dict):
     response = await get_listeners(callback.from_user.id)
+    err = response.get('error')
+    if err is not None:
+        await callback.message.answer(f'{err}: {response.get('detail')}')
+        await callback.answer()
+        return
+
+    temp_data[str(callback.from_user.id)] = set()
+
     await callback.message.answer(
         l10n.format_value('listeners'),
-        reply_markup=userkb.get_users_list(l10n, response),
+        reply_markup=userkb.get_users_list(l10n, response['listeners'], 'listener'),
     )
     await callback.answer()
 
+@user.callback_query(F.data.startswith('add:listener:'))
+@delete_previous_message
+async def choose_speaker(callback: CallbackQuery, l10n, temp_data:dict):
+    _, _, listener_id = callback.data.split(':')
+    listener_id = int(listener_id)
+    set_listeners = temp_data[str(callback.from_user.id)]
+    if listener_id in set_listeners:
+        set_listeners.remove(listener_id)
+    else:
+        set_listeners.add(listener_id)
 
+    response = await get_listeners(callback.from_user.id)
+    err = response.get('error')
+    if err is not None:
+        await callback.message.answer(f'{err}: {response.get('detail')}')
+        await callback.answer()
+        return
+
+    await callback.message.answer(
+        l10n.format_value('listeners'),
+        reply_markup=userkb.get_users_list(l10n, response['listeners'], 'listener', set_listeners),
+    )
+    await callback.answer()
 
 # LISTENER MENU
 @user.callback_query(F.data == 'kb_main_listener')
@@ -78,7 +109,7 @@ async def choose_speaker(callback: CallbackQuery, l10n):
     response = await get_speakers()
     await callback.message.answer(
         l10n.format_value('speakers'),
-        reply_markup=userkb.get_users_list(l10n, response),
+        reply_markup=userkb.get_users_list(l10n, response, 'speaker'),
     )
     await callback.answer()
 

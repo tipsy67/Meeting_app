@@ -19,3 +19,4 @@ kb_new_lecture = New
 kb_open_lecture = Open
 
 listeners = Choose listeners
+kb_save_lecture = Save lecture

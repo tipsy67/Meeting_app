@@ -19,3 +19,4 @@ kb_new_lecture = Новая
 kb_open_lecture = Открыть
 
 listeners = Выберите слушателя
+kb_save_lecture = Сохранить лекцию

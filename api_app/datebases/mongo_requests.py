@@ -90,8 +90,7 @@ async def get_listeners(speaker_id:int):
         },
         {
             '$project': {
-                '_id': 0,
-                'user_id': '$listener_id',
+                '_id':'$listener_id',
                 'username': '$user_data.username',
                 'full_name': {'$concat': ['$user_data.first_name', ' ', '$user_data.last_name']},
             }
@@ -101,4 +100,4 @@ async def get_listeners(speaker_id:int):
     listeners_cursor = await (speaker_listener_collection.aggregate(pipeline))
     listeners = await listeners_cursor.to_list(length=None)
 
-    return listeners
+    return {'listeners': listeners}

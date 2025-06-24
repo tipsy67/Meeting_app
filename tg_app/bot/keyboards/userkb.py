@@ -1,4 +1,5 @@
 from logging.config import listen
+from typing import Optional
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -47,17 +48,21 @@ def get_speaker_keyboard(l10n) -> InlineKeyboardMarkup:
     return create_buttons(l10n, buttons_data)
 
 
-def get_users_list(l10n, users: list[str]) -> InlineKeyboardMarkup:
+def get_users_list(l10n, users: list[dict], name: str, included_users: Optional[set[int]] = None) -> InlineKeyboardMarkup:
+
     buttons_data = [
         (
-            f'{user.get('username')}({user.get('full_name')})',
-            f'add:speaker:{str(user.get('_id'))}',
+            f'{'' if included_users is None or user.get('_id') not in included_users else '✅ '}{user.get('username')}({user.get('full_name')})',
+            f'add:{name}:{str(user.get('_id'))}',
         )
         for user in users
     ]
 
     kb1 = create_buttons(None, buttons_data)
-    kb2 = create_buttons(l10n,  [('kb_main_menu', 'kb_main_menu')])
+    additional_buttons = [('kb_main_menu', 'kb_main_menu')]
+    if name == 'listener': additional_buttons[:0] = [('kb_save_lecture', 'kb_save_lecture')]
+
+    kb2 = create_buttons(l10n,  additional_buttons)
     merged_kb = InlineKeyboardMarkup(inline_keyboard=[
         *kb1.inline_keyboard,
         *kb2.inline_keyboard
