@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, LabeledPrice, Message, PreCheckoutQuery
 
-from tg_app.bot.databases.api_requests import add_speaker, get_speakers, set_user, get_listeners
+from tg_app.bot.databases import api_requests
 from tg_app.bot.keyboards import userkb
 from tg_app.bot.keyboards.decorators import delete_previous_message
 
@@ -21,7 +21,7 @@ class Choice(StatesGroup):
 # START
 @user.message(CommandStart())
 async def start(message: Message, l10n):
-    response = await set_user(message.from_user)
+    response = await api_requests.set_user(message.from_user)
 
     err = response.get('error')
     if err is not None:
@@ -44,15 +44,16 @@ async def start(message: Message, l10n):
 # MAIN MENU
 @user.callback_query(F.data == 'kb_main_menu')
 @delete_previous_message
-async def main_menu(callback: CallbackQuery, l10n):
+async def cb_main_menu(callback: CallbackQuery, l10n):
     await callback.message.answer(
         l10n.format_value('kb_main_menu'), reply_markup=userkb.get_main_keyboard(l10n)
     )
 
+
 # SPEAKER MENU
 @user.callback_query(F.data == 'kb_main_speaker')
 @delete_previous_message
-async def choose_speaker(callback: CallbackQuery, l10n):
+async def cb_speaker_menu(callback: CallbackQuery, l10n):
     await callback.message.answer(
         l10n.format_value('kb_main_speaker'),
         reply_markup=userkb.get_speaker_keyboard(l10n),
@@ -62,8 +63,8 @@ async def choose_speaker(callback: CallbackQuery, l10n):
 
 @user.callback_query(F.data == 'kb_new_lecture')
 @delete_previous_message
-async def choose_speaker(callback: CallbackQuery, l10n, temp_data:dict):
-    response = await get_listeners(callback.from_user.id)
+async def cb_get_listeners(callback: CallbackQuery, l10n, temp_data: dict):
+    response = await api_requests.get_listeners(callback.from_user.id)
     err = response.get('error')
     if err is not None:
         await callback.message.answer(f'{err}: {response.get('detail')}')
@@ -78,9 +79,10 @@ async def choose_speaker(callback: CallbackQuery, l10n, temp_data:dict):
     )
     await callback.answer()
 
+
 @user.callback_query(F.data.startswith('add:listener:'))
 @delete_previous_message
-async def choose_speaker(callback: CallbackQuery, l10n, temp_data:dict):
+async def cb_add_listener(callback: CallbackQuery, l10n, temp_data: dict):
     _, _, listener_id = callback.data.split(':')
     listener_id = int(listener_id)
     set_listeners = temp_data[str(callback.from_user.id)]
@@ -89,7 +91,7 @@ async def choose_speaker(callback: CallbackQuery, l10n, temp_data:dict):
     else:
         set_listeners.add(listener_id)
 
-    response = await get_listeners(callback.from_user.id)
+    response = await api_requests.get_listeners(callback.from_user.id)
     err = response.get('error')
     if err is not None:
         await callback.message.answer(f'{err}: {response.get('detail')}')
@@ -98,15 +100,28 @@ async def choose_speaker(callback: CallbackQuery, l10n, temp_data:dict):
 
     await callback.message.answer(
         l10n.format_value('listeners'),
-        reply_markup=userkb.get_users_list(l10n, response['listeners'], 'listener', set_listeners),
+        reply_markup=userkb.get_users_list(
+            l10n, response['listeners'], 'listener', set_listeners
+        ),
+    )
+    await callback.answer()
+
+
+@user.callback_query(F.data == 'kb_save_lecture')
+@delete_previous_message
+async def cb_save_lecture(callback: CallbackQuery, l10n):
+    response = await api_requests.get_speakers()
+    await callback.message.answer(
+        l10n.format_value('speakers'),
+        reply_markup=userkb.get_users_list(l10n, response, 'speaker'),
     )
     await callback.answer()
 
 # LISTENER MENU
 @user.callback_query(F.data == 'kb_main_listener')
 @delete_previous_message
-async def choose_speaker(callback: CallbackQuery, l10n):
-    response = await get_speakers()
+async def cb_get_speakers(callback: CallbackQuery, l10n):
+    response = await api_requests.get_speakers()
     await callback.message.answer(
         l10n.format_value('speakers'),
         reply_markup=userkb.get_users_list(l10n, response, 'speaker'),
@@ -116,16 +131,18 @@ async def choose_speaker(callback: CallbackQuery, l10n):
 
 @user.callback_query(F.data.startswith('add:speaker:'))
 @delete_previous_message
-async def choose_speaker(callback: CallbackQuery, l10n):
+async def cb_add_speaker(callback: CallbackQuery, l10n):
     _, _, speaker_id = callback.data.split(':')
-    response = await add_speaker(int(speaker_id), callback.from_user.id)
+    response = await api_requests.add_speaker(int(speaker_id), callback.from_user.id)
     err = response.get('error')
     if err is not None:
         await callback.message.answer(f'{err}: {response.get('detail')}')
         await callback.answer()
         return
     # await callback.message.answer()
-    await callback.message.answer(l10n.format_value('add_to_speaker'), reply_markup=userkb.get_main_keyboard(l10n))
+    await callback.message.answer(
+        l10n.format_value('add_to_speaker'), reply_markup=userkb.get_main_keyboard(l10n)
+    )
     await callback.answer()
 
 

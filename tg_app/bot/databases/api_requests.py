@@ -31,7 +31,6 @@ def httpx_request(method: str = 'POST', url: str = None, status_code: int = 200)
                         if (value := request_data.get(key)) is not None:
                             request_args[key] = value
 
-
                 response = await http_method(**request_args)
 
                 if response.status_code != status_code:
@@ -72,6 +71,7 @@ async def add_speaker(speaker: int, listener: int):
     }
 
     return {'json': json}
+
 
 @httpx_request(method='GET', url=APIPath.get_listeners)
 async def get_listeners(speaker: int):

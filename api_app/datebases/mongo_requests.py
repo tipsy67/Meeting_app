@@ -34,7 +34,7 @@ async def set_user(user) -> dict:
     return user
 
 
-async def get_speakers():
+async def get_all_speakers():
     pipeline = [
         {'$match': {'is_speaker': True, 'is_active': True}},
         {
@@ -69,35 +69,32 @@ async def add_listener_to_speaker(data):
 
     return SpeakerListenerResponse(**link)
 
-async def get_listeners(speaker_id:int):
+
+async def get_listeners(speaker_id: int):
 
     pipeline = [
-        {
-            '$match': {
-                'speaker_id': speaker_id
-            }
-        },
+        {'$match': {'speaker_id': speaker_id}},
         {
             '$lookup': {
                 'from': users_collection.name,
                 'localField': 'listener_id',
                 'foreignField': '_id',
-                'as': 'user_data'
+                'as': 'user_data',
             }
         },
-        {
-            '$unwind': '$user_data'
-        },
+        {'$unwind': '$user_data'},
         {
             '$project': {
-                '_id':'$listener_id',
+                '_id': '$listener_id',
                 'username': '$user_data.username',
-                'full_name': {'$concat': ['$user_data.first_name', ' ', '$user_data.last_name']},
+                'full_name': {
+                    '$concat': ['$user_data.first_name', ' ', '$user_data.last_name']
+                },
             }
-        }
+        },
     ]
 
-    listeners_cursor = await (speaker_listener_collection.aggregate(pipeline))
+    listeners_cursor = await speaker_listener_collection.aggregate(pipeline)
     listeners = await listeners_cursor.to_list(length=None)
 
     return {'listeners': listeners}
