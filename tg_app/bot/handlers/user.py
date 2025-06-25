@@ -13,6 +13,8 @@ from tg_app.bot.keyboards.decorators import delete_previous_message
 
 user = Router()
 
+class LectureName(StatesGroup):
+    waiting_for_object_name = State()
 
 class Choice(StatesGroup):
     select_amount = State()
@@ -109,13 +111,34 @@ async def cb_add_listener(callback: CallbackQuery, l10n, temp_data: dict):
 
 @user.callback_query(F.data == 'kb_save_lecture')
 @delete_previous_message
-async def cb_save_lecture(callback: CallbackQuery, l10n):
-    response = await api_requests.get_speakers()
-    await callback.message.answer(
-        l10n.format_value('speakers'),
-        reply_markup=userkb.get_users_list(l10n, response, 'speaker'),
+async def cb_get_lecture_name(callback: CallbackQuery, l10n, state: FSMContext):
+    bot_msg = await callback.message.answer(l10n.format_value('get_name_lecture'))
+    await state.update_data(bot_msg_id=bot_msg.message_id)
+    await state.set_state(LectureName.waiting_for_object_name)
+
+
+@user.message(LectureName.waiting_for_object_name)
+async def cb_save_lecture(message: Message, l10n, state: FSMContext, bot: Bot, temp_data: dict):
+    data = await state.get_data()
+    bot_msg_id = data['bot_msg_id']
+    await bot.delete_message(message.chat.id, bot_msg_id)
+
+    await message.delete()
+    name_lecture = message.text.strip()
+    if len(name_lecture) < 3:
+        bot_msg = await message.answer(l10n.format_value('wrong_name_lecture'))
+        await state.update_data(bot_msg_id=bot_msg.message_id)
+        return
+
+    set_listeners = temp_data[str(message.from_user.id)]
+    name_lecture = f"{name_lecture}_{message.from_user.id}"
+    response = await api_requests.save_lecture(name_lecture, set_listeners)
+
+    await message.answer(
+        l10n.format_value('save_lecture_done'),
+        reply_markup=userkb.get_speaker_keyboard(l10n),
     )
-    await callback.answer()
+    await state.clear()
 
 # LISTENER MENU
 @user.callback_query(F.data == 'kb_main_listener')

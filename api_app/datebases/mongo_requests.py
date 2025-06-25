@@ -10,6 +10,7 @@ client = AsyncMongoClient('mongodb://localhost:27017/')
 db = client['meeting_app']
 users_collection = db['users']
 speaker_listener_collection = db['speaker_listener']
+lecture_collection = db['lecture']
 
 
 async def set_user(user) -> dict:
@@ -98,3 +99,22 @@ async def get_listeners(speaker_id: int):
     listeners = await listeners_cursor.to_list(length=None)
 
     return {'listeners': listeners}
+
+async def save_lecture(data):
+
+    name, user_id = data.name.split('_')
+
+    now = datetime.now()
+    lecture = await lecture_collection.find_one_and_update(
+        {'_id': int(user_id)},
+        {
+            '$set': {
+                'name': name,
+                'listeners': data.data,
+                'updated_at': now,
+            },
+        },
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return lecture

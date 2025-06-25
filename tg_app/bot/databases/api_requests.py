@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Callable, Optional
 
 import httpx
+from aiogram.types import CallbackQuery
 from dotenv import load_dotenv
 
 
@@ -12,6 +13,7 @@ class APIPath:
     get_speakers = f'{BASE_URL}/speakers'
     add_to_speaker = f'{BASE_URL}/add-to-speaker'
     get_listeners = f'{BASE_URL}/listeners'
+    save_lecture = f'{BASE_URL}/save-lecture'
 
 
 def httpx_request(method: str = 'POST', url: str = None, status_code: int = 200):
@@ -80,3 +82,12 @@ async def get_listeners(speaker: int):
     }
 
     return {'params': params}
+
+@httpx_request(method='POST', url=APIPath.save_lecture)
+async def save_lecture(name_lecture: str, set_listeners: set[int]):
+    json = {
+        'name': name_lecture,
+        'data': list(set_listeners),
+    }
+    print(json)
+    return {'json': json}

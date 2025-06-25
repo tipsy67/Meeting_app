@@ -20,3 +20,6 @@ kb_open_lecture = Open
 
 listeners = Choose listeners
 kb_save_lecture = Save lecture
+get_name_lecture = Enter a name for the group and press ENTER:
+wrong_name_lecture = The name must be at least three characters long
+save_lecture_done = You saved the group

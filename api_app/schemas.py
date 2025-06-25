@@ -31,3 +31,8 @@ class SpeakerListenerResponse(SpeakerListener):
 
     class Config:
         json_encoders = {ObjectId: str}
+
+
+class LectureRequest(BaseModel):
+    name: str
+    data: list[int]
