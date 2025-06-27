@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from bson import Int64
+from bson import Int64, ObjectId
 from pymongo import AsyncMongoClient, ReturnDocument
 
 from api_app.schemas import SpeakerListener, SpeakerListenerResponse
@@ -118,3 +118,41 @@ async def save_lecture(data):
         return_document=ReturnDocument.AFTER,
     )
     return lecture
+
+
+async def get_all_lectures(user_id: int):
+    pipeline = [
+        {'$match': {'_id': user_id}},
+        {
+            '$project': {
+                'name': 1,
+                 'update_at': 1,
+            },
+        },
+        {'$sort': {'update_at': -1}},
+    ]
+    lectures_cursor = await lecture_collection.aggregate(pipeline)
+    lectures = await lectures_cursor.to_list(length=None)
+
+    return {'lectures': lectures}
+
+async def get_listeners_from_lecture(speaker_id: int, name: str):
+    pipeline = [
+       {'$match': {'_id': Int64(speaker_id), 'name': name}},
+       {'$unwind': '$listeners'},
+       {
+            '$lookup': {
+                'from': users_collection.name,
+                'localField': 'listeners',
+                'foreignField': '_id',
+                'as': 'listener_data'
+            }
+        },
+        {'$unwind': '$listener_data'},
+        {'$replaceRoot': {'newRoot': '$listener_data'}}
+    ]
+    
+    listeners_cursor = await lecture_collection.aggregate(pipeline)
+    listeners = await listeners_cursor.to_list(length=None)
+
+    return {'listeners': listeners}

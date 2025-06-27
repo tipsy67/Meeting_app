@@ -14,6 +14,8 @@ class APIPath:
     add_to_speaker = f'{BASE_URL}/add-to-speaker'
     get_listeners = f'{BASE_URL}/listeners'
     save_lecture = f'{BASE_URL}/save-lecture'
+    get_lectures = f'{BASE_URL}/open-lecture'
+    get_listeners_from_lecture = f'{BASE_URL}/listeners-from-lecture'
 
 
 def httpx_request(method: str = 'POST', url: str = None, status_code: int = 200):
@@ -83,6 +85,7 @@ async def get_listeners(speaker: int):
 
     return {'params': params}
 
+
 @httpx_request(method='POST', url=APIPath.save_lecture)
 async def save_lecture(name_lecture: str, set_listeners: set[int]):
     json = {
@@ -91,3 +94,20 @@ async def save_lecture(name_lecture: str, set_listeners: set[int]):
     }
     print(json)
     return {'json': json}
+
+@httpx_request(method='GET', url=APIPath.get_lectures)
+async def get_all_lectures(user_id: int):
+    params = {
+        'user_id': user_id,
+    }
+
+    return {'params': params}
+
+@httpx_request(method='GET', url=APIPath.get_listeners_from_lecture)
+async def get_listeners_from_lecture(speaker_id: int, name: str):
+    params = {
+        'speaker_id': speaker_id,
+        'name': name,
+    }
+
+    return {'params': params}

@@ -23,3 +23,6 @@ kb_save_lecture = Сохранить лекцию
 get_name_lecture = Введите имя для группы и нажмите ENTER:
 wrong_name_lecture = Имя не должно быть меньше трех символов
 save_lecture_done = Вы сохранили группу
+open_lecture = Выберите лекцию
+
+kb_back = Назад

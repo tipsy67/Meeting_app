@@ -72,3 +72,17 @@ def get_users_list(
         inline_keyboard=[*kb1.inline_keyboard, *kb2.inline_keyboard]
     )
     return merged_kb
+
+
+async def get_lectures_list(l10n, lectures: list[dict]) -> InlineKeyboardMarkup:
+    buttons_data = [
+        (lecture.get('name'),
+        f'edit:lecture:{str(lecture.get('_id'))}:{lecture.get('name')}') for lecture in lectures
+    ]
+    kb1 = create_buttons(None, buttons_data)
+    additional_buttons = [('kb_back', 'kb_main_speaker')]
+    kb2 = create_buttons(l10n, additional_buttons)
+    merged_kb = InlineKeyboardMarkup(
+        inline_keyboard=[*kb1.inline_keyboard, *kb2.inline_keyboard]
+    )
+    return merged_kb

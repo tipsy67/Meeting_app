@@ -14,12 +14,13 @@ def delete_previous_message(handler: Callable[[CallbackQuery], Awaitable[None]])
     async def wrapper(callback: CallbackQuery, *args, **kwargs):
         try:
             await callback.message.delete()
+            func = await handler(callback, *args, **kwargs)
         except Exception as e:
             await callback.answer(f"Ошибка удаления: {e}", show_alert=True)
             raise
         finally:
             await callback.answer()
 
-        return await handler(callback, *args, **kwargs)
+        return func
 
     return wrapper
