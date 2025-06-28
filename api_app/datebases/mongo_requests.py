@@ -118,6 +118,7 @@ async def save_lecture(data):
                 'updated_at': now,
             },
         },
+        projection={'_id': False},
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )
