@@ -50,7 +50,7 @@ async def get_all_speakers():
     speakers_cursor = await users_collection.aggregate(pipeline)
     speakers = await speakers_cursor.to_list(length=None)
 
-    return speakers
+    return {'speakers': speakers}
 
 
 async def add_listener_to_speaker(data):
@@ -102,14 +102,16 @@ async def get_listeners(speaker_id: int):
 
 async def save_lecture(data):
 
-    name, user_id = data.name.split('_')
+    speaker_id, lecture_name = data.name.split('_')
+    speaker_id = int(speaker_id)
 
     now = datetime.now()
     lecture = await lecture_collection.find_one_and_update(
-        {'_id': int(user_id)},
+        {'speaker_id': speaker_id, 'lecture_name': lecture_name},
         {
             '$set': {
-                'name': name,
+                'speaker_id': speaker_id,
+                'lecture_name': lecture_name,
                 'listeners': data.data,
                 'updated_at': now,
             },
@@ -122,11 +124,12 @@ async def save_lecture(data):
 
 async def get_all_lectures(user_id: int):
     pipeline = [
-        {'$match': {'_id': user_id}},
+        {'$match': {'speaker_id': user_id}},
         {
             '$project': {
-                'name': 1,
-                 'update_at': 1,
+                '_id': '$speaker_id',
+                'name': '$lecture_name',
+                'update_at': 1,
             },
         },
         {'$sort': {'update_at': -1}},
@@ -136,9 +139,10 @@ async def get_all_lectures(user_id: int):
 
     return {'lectures': lectures}
 
+
 async def get_listeners_from_lecture(speaker_id: int, name: str):
     pipeline = [
-       {'$match': {'_id': Int64(speaker_id), 'name': name}},
+       {'$match': {'speaker_id': speaker_id, 'lecture_name': name }},
        {'$unwind': '$listeners'},
        {
             '$lookup': {

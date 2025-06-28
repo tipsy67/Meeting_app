@@ -15,7 +15,6 @@ from handlers.user import user
 async def main():
     bot = Bot(token=os.environ.get("TG_TOKEN"))
     dp = Dispatcher()
-    dp['temp_data'] = {}
     dp.update.middleware(FluentL10nMiddleware('locales'))
     dp.include_routers(
         user,

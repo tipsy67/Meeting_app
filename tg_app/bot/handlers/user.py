@@ -9,7 +9,7 @@ from aiogram.types import CallbackQuery, LabeledPrice, Message, PreCheckoutQuery
 
 from tg_app.bot.databases import api_requests
 from tg_app.bot.keyboards import userkb
-from tg_app.bot.keyboards.decorators import delete_previous_message
+from tg_app.bot.keyboards.service import delete_previous_message, handle_api_response
 
 user = Router()
 
@@ -52,7 +52,7 @@ async def cb_main_menu(callback: CallbackQuery, l10n):
     )
 
 
-# SPEAKER MENU
+## SPEAKER MENU
 @user.callback_query(F.data == 'kb_main_speaker')
 @delete_previous_message
 async def cb_speaker_menu(callback: CallbackQuery, l10n):
@@ -61,41 +61,38 @@ async def cb_speaker_menu(callback: CallbackQuery, l10n):
         reply_markup=userkb.get_speaker_keyboard(l10n),
     )
 
-
+#### New lecture
 @user.callback_query(F.data == 'kb_new_lecture')
 @delete_previous_message
-async def cb_get_listeners(callback: CallbackQuery, l10n, temp_data: dict):
+async def cb_get_listeners(callback: CallbackQuery, l10n, state: FSMContext):
     response = await api_requests.get_listeners(callback.from_user.id)
-    err = response.get('error')
-    if err is not None:
-        await callback.message.answer(f'{err}: {response.get('detail')}')
-        await callback.answer()
+    if not await handle_api_response(response, callback, l10n):
         return
 
-    temp_data[str(callback.from_user.id)] = set()
+    await state.update_data(listeners=list())
 
     await callback.message.answer(
         l10n.format_value('listeners'),
         reply_markup=userkb.get_users_list(l10n, response['listeners'], 'listener'),
     )
 
-
+###### Listener list
 @user.callback_query(F.data.startswith('add:listener:'))
 @delete_previous_message
-async def cb_add_listener(callback: CallbackQuery, l10n, temp_data: dict):
-    _, _, listener_id = callback.data.split(':')
+async def cb_add_listener(callback: CallbackQuery, l10n, state: FSMContext):
+    *_, listener_id = callback.data.split(':')
     listener_id = int(listener_id)
-    set_listeners = temp_data[str(callback.from_user.id)]
+
+    listeners = await state.get_data()
+    set_listeners = set(listeners.get('listeners'))
     if listener_id in set_listeners:
         set_listeners.remove(listener_id)
     else:
         set_listeners.add(listener_id)
+    await state.update_data(listeners=set_listeners)
 
     response = await api_requests.get_listeners(callback.from_user.id)
-    err = response.get('error')
-    if err is not None:
-        await callback.message.answer(f'{err}: {response.get('detail')}')
-        await callback.answer()
+    if not await handle_api_response(response, callback, l10n):
         return
 
     await callback.message.answer(
@@ -105,7 +102,7 @@ async def cb_add_listener(callback: CallbackQuery, l10n, temp_data: dict):
         ),
     )
 
-# save lecture
+###### Save lecture
 @user.callback_query(F.data == 'kb_save_lecture')
 @delete_previous_message
 async def cb_get_lecture_name(callback: CallbackQuery, l10n, state: FSMContext):
@@ -113,9 +110,9 @@ async def cb_get_lecture_name(callback: CallbackQuery, l10n, state: FSMContext):
     await state.update_data(bot_msg_id=bot_msg.message_id)
     await state.set_state(LectureName.waiting_for_object_name)
 
-
+###### Enter name of lecture
 @user.message(LectureName.waiting_for_object_name)
-async def cb_save_lecture(message: Message, l10n, state: FSMContext, bot: Bot, temp_data: dict):
+async def cb_save_lecture(message: Message, l10n, state: FSMContext, bot: Bot):
     data = await state.get_data()
     bot_msg_id = data['bot_msg_id']
     await bot.delete_message(message.chat.id, bot_msg_id)
@@ -127,40 +124,77 @@ async def cb_save_lecture(message: Message, l10n, state: FSMContext, bot: Bot, t
         await state.update_data(bot_msg_id=bot_msg.message_id)
         return
 
-    set_listeners = temp_data[str(message.from_user.id)]
-    name_lecture = f"{name_lecture}_{message.from_user.id}"
+    listeners = await state.get_data()
+    set_listeners = set(listeners.get('listeners'))
+    cleaned_text = " ".join(name_lecture.split())
+    name_lecture = cleaned_text.replace(" ", ".")
+    name_lecture = f"{message.from_user.id}_{name_lecture}"
+
     response = await api_requests.save_lecture(name_lecture, set_listeners)
 
     await message.answer(
         l10n.format_value('save_lecture_done'),
         reply_markup=userkb.get_speaker_keyboard(l10n),
     )
-    await state.clear()
+    # await state.clear()
+    await state.set_state(None)
 
-# open lecture
+#### Open lecture
 @user.callback_query(F.data == 'kb_open_lecture')
 @delete_previous_message
 async def cb_open_lecture(callback: CallbackQuery, l10n):
     response = await api_requests.get_all_lectures(callback.from_user.id)
+    if not await handle_api_response(response, callback, l10n):
+        return
+
     await callback.message.answer(
         l10n.format_value('open_lecture'),
         reply_markup=await userkb.get_lectures_list(l10n, response['lectures']),
     )
 
-@user.callback_query(F.data.startswith('edit:lecture:'))
+####
+#### Edit lecture
+@user.callback_query(F.data.startswith('open:lecture:'))
 @delete_previous_message
-async def cb_get_listeners_from_lecture(callback: CallbackQuery, l10n, temp_data: dict):
-    _, _, _, name = callback.data.split(':')
-    response = await api_requests.get_listeners_from_lecture(callback.from_user.id, name)
+async def cb_open_lecture(callback: CallbackQuery, l10n, state: FSMContext):
+    *_, lecture = callback.data.split(':')
+
+    response = await api_requests.get_listeners_from_lecture(callback.from_user.id, lecture)
+    if not await handle_api_response(response, callback, l10n):
+        return
 
     set_listeners = set([listener.get('_id') for listener in response['listeners']])
-    temp_data[str(callback.from_user.id)] = set_listeners
-
-    response = await api_requests.get_listeners(callback.from_user.id)
+    await state.update_data(listeners=list(set_listeners))
+    await state.update_data(lecture=lecture)
 
     await callback.message.answer(
-        l10n.format_value('listeners'),
-        reply_markup=userkb.get_users_list(l10n, response['listeners'], 'listener', set_listeners),
+        f'{l10n.format_value('kb_lecture')} {lecture}',
+        reply_markup=userkb.get_lecture_keyboard(l10n),
+    )
+
+###### Creating new meet
+@user.callback_query(F.data == 'kb_new_meeting')
+async def cb_new_meeting(callback: CallbackQuery, l10n, state: FSMContext):
+    await callback.message.answer('Creating new meeting...')
+
+###### Edit users in lecture
+@user.callback_query(F.data == 'kb_edit_lecture')
+@delete_previous_message
+async def cb_get_listeners_from_lecture(callback: CallbackQuery, l10n, state: FSMContext):
+
+    data = await state.get_data()
+    set_listeners = set(data.get('listeners'))
+    lecture = data.get('lecture')
+
+    response = await api_requests.get_listeners(callback.from_user.id)
+    if not await handle_api_response(response, callback, l10n):
+        return
+
+    await callback.message.answer(
+        f'{l10n.format_value('kb_lecture')} {lecture}',
+        reply_markup=userkb.get_lecture_users_list(
+            l10n, response['listeners'], 'listener', set_listeners, lecture
+        ),
     )
 
 # LISTENER MENU
@@ -168,26 +202,28 @@ async def cb_get_listeners_from_lecture(callback: CallbackQuery, l10n, temp_data
 @delete_previous_message
 async def cb_get_speakers(callback: CallbackQuery, l10n):
     response = await api_requests.get_speakers()
+    if not await handle_api_response(response, callback, l10n):
+        return
+
     await callback.message.answer(
         l10n.format_value('speakers'),
-        reply_markup=userkb.get_users_list(l10n, response, 'speaker'),
+        reply_markup=userkb.get_users_list(l10n, response['speakers'], 'speaker'),
     )
 
-
+## Add user to speaker
 @user.callback_query(F.data.startswith('add:speaker:'))
 @delete_previous_message
 async def cb_add_speaker(callback: CallbackQuery, l10n):
-    _, _, speaker_id = callback.data.split(':')
+    *_, speaker_id = callback.data.split(':')
     response = await api_requests.add_speaker(int(speaker_id), callback.from_user.id)
-    err = response.get('error')
-    if err is not None:
-        await callback.message.answer(f'{err}: {response.get('detail')}')
-        await callback.answer()
+    if not await handle_api_response(response, callback, l10n):
         return
-    # await callback.message.answer()
+
     await callback.message.answer(
         l10n.format_value('add_to_speaker'), reply_markup=userkb.get_main_keyboard(l10n)
     )
+
+#END MENU
 
 
 @user.callback_query(F.data == 'donate')

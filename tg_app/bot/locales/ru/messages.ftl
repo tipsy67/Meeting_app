@@ -24,5 +24,8 @@ get_name_lecture = Введите имя для группы и нажмите E
 wrong_name_lecture = Имя не должно быть меньше трех символов
 save_lecture_done = Вы сохранили группу
 open_lecture = Выберите лекцию
+kb_lecture = Лекция:
+kb_new_meeting = Создать конференцию
+kb_edit_lecture = Редактировать участников
 
 kb_back = Назад

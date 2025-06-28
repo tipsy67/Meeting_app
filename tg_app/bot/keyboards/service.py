@@ -24,3 +24,18 @@ def delete_previous_message(handler: Callable[[CallbackQuery], Awaitable[None]])
         return func
 
     return wrapper
+
+async def handle_api_response(response, callback: CallbackQuery, l10n=None):
+    """
+    Обработчик ошибок
+    :param response: ответ АПИ
+    :param callback:
+    :param l10n: локализация
+    :return:
+    """
+    if response.get('error'):
+        error_msg = f"{response['error']}: {response.get('detail', '')}"
+        await callback.message.answer(error_msg)
+        await callback.answer()
+        return False
+    return True
