@@ -40,3 +40,4 @@ async def handle_api_response(response, callback: CallbackQuery, l10n=None):
         await callback.answer()
         return False
     return True
+

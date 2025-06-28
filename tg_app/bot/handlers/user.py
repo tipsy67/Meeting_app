@@ -47,18 +47,16 @@ async def start(message: Message, l10n):
 
 # MAIN MENU
 @user.callback_query(F.data == 'kb_main_menu')
-@delete_previous_message
 async def cb_main_menu(callback: CallbackQuery, l10n):
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('kb_main_menu'), reply_markup=userkb.get_main_keyboard(l10n)
     )
 
 
 ## SPEAKER MENU
 @user.callback_query(F.data == 'kb_main_speaker')
-@delete_previous_message
 async def cb_speaker_menu(callback: CallbackQuery, l10n):
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('kb_main_speaker'),
         reply_markup=userkb.get_speaker_keyboard(l10n),
     )
@@ -66,7 +64,6 @@ async def cb_speaker_menu(callback: CallbackQuery, l10n):
 
 #### New lecture
 @user.callback_query(F.data == 'kb_new_lecture')
-@delete_previous_message
 async def cb_get_listeners(callback: CallbackQuery, l10n, state: FSMContext):
     response = await api_requests.get_listeners(callback.from_user.id)
     if not await handle_api_response(response, callback, l10n):
@@ -74,7 +71,7 @@ async def cb_get_listeners(callback: CallbackQuery, l10n, state: FSMContext):
 
     await state.update_data(listeners=list())
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('listeners'),
         reply_markup=userkb.get_users_list(l10n, response['listeners'], 'listener'),
     )
@@ -82,7 +79,6 @@ async def cb_get_listeners(callback: CallbackQuery, l10n, state: FSMContext):
 
 ###### Listener list
 @user.callback_query(F.data.startswith('add:listener:'))
-@delete_previous_message
 async def cb_add_listener(callback: CallbackQuery, l10n, state: FSMContext):
     *_, listener_id = callback.data.split(':')
     listener_id = int(listener_id)
@@ -99,7 +95,7 @@ async def cb_add_listener(callback: CallbackQuery, l10n, state: FSMContext):
     if not await handle_api_response(response, callback, l10n):
         return
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('listeners'),
         reply_markup=userkb.get_users_list(
             l10n, response['listeners'], 'listener', set_listeners
@@ -122,8 +118,8 @@ async def cb_save_lecture(message: Message, l10n, state: FSMContext, bot: Bot):
     data = await state.get_data()
     bot_msg_id = data['bot_msg_id']
     await bot.delete_message(message.chat.id, bot_msg_id)
-
     await message.delete()
+
     name_lecture = message.text.strip()
     if len(name_lecture) < 3 or len(name_lecture.encode('utf-8')) > 54:
         bot_msg = await message.answer(l10n.format_value('wrong_name_lecture'))
@@ -148,13 +144,12 @@ async def cb_save_lecture(message: Message, l10n, state: FSMContext, bot: Bot):
 
 #### Open lecture
 @user.callback_query(F.data == 'kb_open_lecture')
-@delete_previous_message
 async def cb_open_lecture(callback: CallbackQuery, l10n):
     response = await api_requests.get_all_lectures(callback.from_user.id)
     if not await handle_api_response(response, callback, l10n):
         return
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('open_lecture'),
         reply_markup=await userkb.get_lectures_list(l10n, response['lectures']),
     )
@@ -162,7 +157,6 @@ async def cb_open_lecture(callback: CallbackQuery, l10n):
 
 #### Edit lecture
 @user.callback_query(F.data.startswith('open:lecture:'))
-@delete_previous_message
 async def cb_open_lecture(callback: CallbackQuery, l10n, state: FSMContext):
     *_, lecture = callback.data.split(':')
 
@@ -176,7 +170,7 @@ async def cb_open_lecture(callback: CallbackQuery, l10n, state: FSMContext):
     await state.update_data(listeners=list(set_listeners))
     await state.update_data(lecture=lecture)
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         f'{l10n.format_value('kb_lecture')} {lecture}',
         reply_markup=userkb.get_lecture_keyboard(l10n),
     )
@@ -190,7 +184,6 @@ async def cb_new_meeting(callback: CallbackQuery, l10n, state: FSMContext):
 
 ###### Edit users in lecture
 @user.callback_query(F.data == 'kb_edit_lecture')
-@delete_previous_message
 async def cb_get_listeners_from_lecture(
     callback: CallbackQuery, l10n, state: FSMContext
 ):
@@ -203,7 +196,7 @@ async def cb_get_listeners_from_lecture(
     if not await handle_api_response(response, callback, l10n):
         return
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         f'{l10n.format_value('kb_lecture')} {lecture}',
         reply_markup=userkb.get_lecture_users_list(
             l10n, response['listeners'], 'listener', set_listeners, lecture
@@ -222,7 +215,7 @@ async def cb_delete_lecture(callback: CallbackQuery, l10n, state: FSMContext):
     if not await handle_api_response(response, callback, l10n):
         return
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('open_lecture'),
         reply_markup=await userkb.get_lectures_list(l10n, response['lectures']),
     )
@@ -230,13 +223,12 @@ async def cb_delete_lecture(callback: CallbackQuery, l10n, state: FSMContext):
 
 # LISTENER MENU
 @user.callback_query(F.data == 'kb_main_listener')
-@delete_previous_message
 async def cb_get_speakers(callback: CallbackQuery, l10n):
     response = await api_requests.get_speakers()
     if not await handle_api_response(response, callback, l10n):
         return
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('speakers'),
         reply_markup=userkb.get_users_list(l10n, response['speakers'], 'speaker'),
     )
@@ -244,14 +236,13 @@ async def cb_get_speakers(callback: CallbackQuery, l10n):
 
 ## Add user to speaker
 @user.callback_query(F.data.startswith('add:speaker:'))
-@delete_previous_message
 async def cb_add_speaker(callback: CallbackQuery, l10n):
     *_, speaker_id = callback.data.split(':')
     response = await api_requests.add_speaker(int(speaker_id), callback.from_user.id)
     if not await handle_api_response(response, callback, l10n):
         return
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         l10n.format_value('add_to_speaker'), reply_markup=userkb.get_main_keyboard(l10n)
     )
 
