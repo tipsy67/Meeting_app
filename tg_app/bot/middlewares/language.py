@@ -4,7 +4,7 @@ from typing import Callable
 
 from aiogram import BaseMiddleware
 from aiogram.utils.i18n import I18n, SimpleI18nMiddleware
-from fluent.runtime.fallback import FluentResourceLoader, FluentLocalization
+from fluent.runtime.fallback import FluentLocalization, FluentResourceLoader
 
 
 class FluentL10nMiddleware(BaseMiddleware):
@@ -28,7 +28,9 @@ class FluentL10nMiddleware(BaseMiddleware):
             user = event.from_user
         elif hasattr(event, 'message') and hasattr(event.message, 'from_user'):
             user = event.message.from_user
-        elif hasattr(event, 'callback_query') and hasattr(event.callback_query, 'from_user'):
+        elif hasattr(event, 'callback_query') and hasattr(
+            event.callback_query, 'from_user'
+        ):
             user = event.callback_query.from_user
 
         if user and user.language_code:
@@ -37,6 +39,7 @@ class FluentL10nMiddleware(BaseMiddleware):
         data["l10n"] = self.l10ns.get(user_locale, self.l10ns[self.default_locale])
 
         return await handler(event, data)
+
 
 # Стандартные функции требуют бинарные файлы mo
 # BASE_BOT_DIR = Path(__file__).resolve().parent.parent

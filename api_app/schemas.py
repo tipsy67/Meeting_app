@@ -20,11 +20,19 @@ class UserResponse(UserCreateUpdate):
     is_speaker: Optional[bool] = None
     is_banned: Optional[str] = None
 
+
 class SpeakerListener(BaseModel):
     speaker_id: int
     listener_id: int
 
+
 class SpeakerListenerResponse(SpeakerListener):
     created_at: datetime
+
     class Config:
         json_encoders = {ObjectId: str}
+
+
+class LectureRequest(BaseModel):
+    name: str
+    data: list[int]

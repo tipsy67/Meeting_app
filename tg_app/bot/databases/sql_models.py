@@ -1,9 +1,8 @@
-from sqlalchemy import ForeignKey, String, BigInteger
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+from sqlalchemy import BigInteger, ForeignKey, String
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-engine = create_async_engine(url='sqlite+aiosqlite:///db.sqlite3',
-                             echo=True)
+engine = create_async_engine(url='sqlite+aiosqlite:///db.sqlite3', echo=True)
 
 async_session = async_sessionmaker(engine)
 

@@ -1,22 +1,41 @@
 from fastapi import APIRouter
 from starlette import status
 
-from api_app.datebases.mongo_requests import set_user, get_speakers, add_listener_to_speaker
-from api_app.schemas import UserCreateUpdate, SpeakerListener
+from api_app.datebases import mongo_requests
+from api_app.schemas import SpeakerListener, UserCreateUpdate, LectureRequest
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+
 @router.get('/speakers', status_code=status.HTTP_200_OK)
-async def get_all_speakers():
-    return await get_speakers()
+async def get_all_speakers_rt():
+    return await mongo_requests.get_all_speakers()
+
+@router.post('/save-lecture', status_code=status.HTTP_200_OK)
+async def save_lecture_rt(data: LectureRequest):
+    return await mongo_requests.save_lecture(data)
+
+@router.get('/open-lecture', status_code=status.HTTP_200_OK)
+async def get_all_lecture_rt(user_id: int):
+    return await mongo_requests.get_all_lectures(user_id)
 
 @router.post('/add-to-speaker', status_code=status.HTTP_200_OK)
-async def add_to_speaker(data: SpeakerListener):
-    return await add_listener_to_speaker(data)
+async def add_listener_to_speaker_rt(data: SpeakerListener):
+    return await mongo_requests.add_listener_to_speaker(data)
+
+@router.get('/listeners-from-lecture', status_code=status.HTTP_200_OK)
+async def get_listener_from_lecture_rt(speaker_id: int, name: str):
+    return await mongo_requests.get_listeners_from_lecture(speaker_id, name)
+
+@router.get('/listeners', status_code=status.HTTP_200_OK)
+async def get_listeners_rt(speaker_id: int):
+    return await mongo_requests.get_listeners(speaker_id)
+
 
 @router.post('', status_code=status.HTTP_200_OK)
-async def create_user(tg_user: UserCreateUpdate):
-    return await set_user(tg_user)
+async def set_user_rt(tg_user: UserCreateUpdate):
+    return await mongo_requests.set_user(tg_user)
+
 
 @router.put('')
 async def update_user():
