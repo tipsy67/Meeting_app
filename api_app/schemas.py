@@ -7,9 +7,9 @@ from typing_extensions import Optional
 
 class UserCreateUpdate(BaseModel):
     id: int
-    username: str
+    username: Optional[str] = None
     first_name: str
-    last_name: str
+    last_name: Optional[str] = None
 
 
 class UserResponse(UserCreateUpdate):
