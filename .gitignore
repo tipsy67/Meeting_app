@@ -789,3 +789,6 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos
 
+credentials.json
+secret_file.json
+secret_file_web.json
