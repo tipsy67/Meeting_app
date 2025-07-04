@@ -792,3 +792,7 @@ Temporary Items
 credentials.json
 secret_file.json
 secret_file_web.json
+
+templates_test/
+json_reference/
+credentials/
