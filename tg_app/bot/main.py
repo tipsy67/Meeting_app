@@ -6,11 +6,9 @@ from dotenv import load_dotenv
 
 from tg_app.bot.databases.sql_models import async_main
 from tg_app.bot.middlewares.language import FluentL10nMiddleware
-
-load_dotenv()
-
 from handlers.user import user
 
+load_dotenv()
 
 async def main():
     bot = Bot(token=os.environ.get("TG_TOKEN"))

@@ -1,0 +1,34 @@
+{
+    "kind": "youtube#liveStream",
+    "etag": "eZjR91Kmf4JAOHWL4ZRDt4DEqDM",
+    "id": "elUWHdQIPCRPugT84x4Luw1751495345233022",
+    "snippet": {
+        "publishedAt": "2025-07-02T22:29:05Z",
+        "channelId": "UCelUWHdQIPCRPugT84x4Luw",
+        "title": "test stream from postman",
+        "description": "",
+        "isDefaultStream": false
+    },
+    "cdn": {
+        "ingestionType": "rtmp",
+        "ingestionInfo": {
+            "streamName": "1v9q-fh50-1gj5-wt82-a12z",
+            "ingestionAddress": "rtmp://a.rtmp.youtube.com/live2",
+            "backupIngestionAddress": "rtmp://b.rtmp.youtube.com/live2?backup=1",
+            "rtmpsIngestionAddress": "rtmps://a.rtmps.youtube.com/live2",
+            "rtmpsBackupIngestionAddress": "rtmps://b.rtmps.youtube.com/live2?backup=1"
+        },
+        "resolution": "720p",
+        "frameRate": "30fps"
+    },
+    "status": {
+        "streamStatus": "ready",
+        "healthStatus": {
+            "status": "noData"
+        }
+    },
+    "contentDetails": {
+        "closedCaptionsIngestionUrl": "http://upload.youtube.com/closedcaption?cid=1v9q-fh50-1gj5-wt82-a12z",
+        "isReusable": true
+    }
+}

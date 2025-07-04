@@ -1,0 +1,68 @@
+{
+    "kind": "youtube#liveBroadcast",
+    "etag": "EcsrUoWthSA9uSpb8sfA3OsWSbE",
+    "id": "Go43dWA_Bik",
+    "snippet": {
+        "publishedAt": "2025-07-02T22:32:52Z",
+        "channelId": "UCelUWHdQIPCRPugT84x4Luw",
+        "title": "test from postman",
+        "description": "",
+        "thumbnails": {
+            "default": {
+                "url": "https://i.ytimg.com/vi/Go43dWA_Bik/default_live.jpg",
+                "width": 120,
+                "height": 90
+            },
+            "medium": {
+                "url": "https://i.ytimg.com/vi/Go43dWA_Bik/mqdefault_live.jpg",
+                "width": 320,
+                "height": 180
+            },
+            "high": {
+                "url": "https://i.ytimg.com/vi/Go43dWA_Bik/hqdefault_live.jpg",
+                "width": 480,
+                "height": 360
+            },
+            "standard": {
+                "url": "https://i.ytimg.com/vi/Go43dWA_Bik/sddefault_live.jpg",
+                "width": 640,
+                "height": 480
+            },
+            "maxres": {
+                "url": "https://i.ytimg.com/vi/Go43dWA_Bik/maxresdefault_live.jpg",
+                "width": 1280,
+                "height": 720
+            }
+        },
+        "scheduledStartTime": "2025-07-02T22:45:00Z",
+        "isDefaultBroadcast": false,
+        "liveChatId": "KicKGFVDZWxVV0hkUUlQQ1JQdWdUODR4NEx1dxILR280M2RXQV9CaWs"
+    },
+    "status": {
+        "lifeCycleStatus": "ready",
+        "privacyStatus": "unlisted",
+        "recordingStatus": "notRecording",
+        "madeForKids": false,
+        "selfDeclaredMadeForKids": false
+    },
+    "contentDetails": {
+        "boundStreamId": "elUWHdQIPCRPugT84x4Luw1751495345233022",
+        "boundStreamLastUpdateTimeMs": "2025-07-02T22:39:55Z",
+        "monitorStream": {
+            "enableMonitorStream": true,
+            "broadcastStreamDelayMs": 0,
+            "embedHtml": "<iframe width=\"425\" height=\"344\" src=\"https://www.youtube.com/embed/Go43dWA_Bik?autoplay=1&livemonitor=1\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>"
+        },
+        "enableEmbed": false,
+        "enableDvr": true,
+        "enableContentEncryption": false,
+        "recordFromStart": true,
+        "enableClosedCaptions": false,
+        "closedCaptionsType": "closedCaptionsDisabled",
+        "enableLowLatency": false,
+        "latencyPreference": "normal",
+        "projection": "rectangular",
+        "enableAutoStart": false,
+        "enableAutoStop": false
+    }
+}
