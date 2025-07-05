@@ -174,7 +174,10 @@ async def bind_broadcast(
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                url="https://www.googleapis.com/youtube/v3/liveBroadcasts/bind",
+                url=(
+                    "https://www.googleapis.com/youtube/v3/"
+                    "liveBroadcasts/bind"
+                ),
                 params=params,
                 headers=headers,
             )

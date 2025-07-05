@@ -1,118 +1,66 @@
 """
 Schemas for the Jitsi application.
 """
-import datetime
-from pydantic import BaseModel, Field
-from typing import Optional
+from datetime import datetime
+from typing import Optional, Annotated
 import uuid
+from pydantic import BaseModel, Field
 
 
-def generate_uuid():
-    """
-    Generation UUID
-    """
-    return str(uuid.uuid1())
-
-
-class User(BaseModel):
+class UserModel(BaseModel):
     """
     User schema representing a participant in the conference.
-    This schema includes the user's Telegram ID, first name, last name, and username.
-    It is used to identify users in the conference system.
-    _id = telegram id
+    This schema includes:
+        id: int - telegram id
+        first name: str (optional) - telegram first_name
+        last name: str (optional) - telegram last_name
+        username: str (optional) - telegram username
+        is_speaker: bool - for set role speaker
+        speaker_stream_key: - stream key if user is speaker
+
+    * use alias _id only for searalization for MongoDB
     """
-    id: str = Field(..., alias="_id")
+    id: Annotated[int, Field(serialization_alias="_id")]
     first_name: str
     last_name: Optional[str] = None
     username: Optional[str] = None
+    is_speaker: bool = False
+    speaker_stream_key: Optional[str] = None
 
 
-class Speaker(BaseModel):
+class LectureHallModel(BaseModel):
     """
-    Speaker schema representing a speaker in the conference.
-    This schema includes the speaker's ID and the user information.
-    It is used to identify speakers in the conference system.
+    LectureHall schema representing a group of users
+    who are members of lection by speaker.
+    This schema includes:
+        name: str - title of group/lecture
+        description: str (optional) - description of group/lecture
+        speaker_id: int - id of user who owner of the group/lecture
+        listenerd: list[int] - list of users id who listening the lecture
     """
-    user_id: str
-
-    class Config:
-        orm_mode = True
-
-class SpeakerInDB(Speaker):
-    id: str = Field(default_factory=generate_uuid, alias="_id")
-
-
-class SpeakerOut(BaseModel):
-    id: str
-    user: User
-
-    class Config:
-        orm_mode = True
-
-
-class CreateLecture(BaseModel):
-    """
-    Lecture schema representing a lecture in the conference.
-    This schema includes the lecture's ID, name, speaker information,
-    a list of listeners (users), and the stream key and URL.
-    It is used to manage the lecture details in the conference system.
-    """
-    id: str = Field(default_factory=generate_uuid(), alias="_id")
     name: str
-    speaker_id: str
-    listener_ids: Optional[list[str]]
-    stream_key: str
-    stream_url: Optional[str] = None
-
-    class Config:
-        orm_mode = True
+    description: Optional[str] = None
+    speaker_id: int
+    listeners: Optional[list[int]] = []
 
 
-class Lecture(BaseModel):
-    """
-    Lecture schema representing a lecture in the conference.
-    This schema includes the lecture's ID, name, speaker information,
-    a list of listeners (users), and the stream key and URL.
-    It is used to manage the lecture details in the conference system.
-    """
-    id: str
-    name: str
-    speaker: Speaker
-    listeners: Optional[list[User]]
-    stream_key: str
-    stream_url: Optional[str] = None
-
-    class Config:
-        orm_mode = True
-
-
-class CreateConference(BaseModel):
+class ConferenceModel(BaseModel):
     """
     Conference schema representing a conference session.
-    This schema includes the conference's ID, lecture information,
-    the URL for the conference, and the start time.
-    It is used to manage the conference session details in the system.
+        id: str - uuid id (for generate uniq link)
+        lecture_hall_id: str - for wich group or lecture
+        recording_link: str - link for stream and recording video (broadcast_id)
+        start_datetime: datetim for start conference
+        end_datetime: datetime for end conference
     """
-    id: str = Field(default_factory=generate_uuid(), alias="_id")
-    lecture_id: str
-    url: str
-    start_time: str
-
-    class Config:
-        orm_mode = True
-
-
-class Conference(BaseModel):
-    """
-    Conference schema representing a conference session.
-    This schema includes the conference's ID, lecture information,
-    the URL for the conference, and the start time.
-    It is used to manage the conference session details in the system.
-    """
-    id: str
-    lecture: Lecture
-    url: str
-    start_time: datetime.datetime
-
-    class Config:
-        orm_mode = True
+    id: Annotated[
+        str,
+        Field(
+            default_factory=lambda: str(uuid.uuid4()),
+            serialization_alias="_id"
+        )
+    ]
+    lecture_hall_id: int
+    recording_link: str
+    start_datetime: datetime
+    end_time: datetime
