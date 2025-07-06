@@ -15,7 +15,7 @@ const initTelegramWebApp = () => {
 
 // Конфигурация API
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:8000/users',
+  BASE_URL: 'https://ijqmrk-37-44-40-134.ru.tuna.am/users',
   ENDPOINTS: {
     set_user: '',
     get_speakers: '/speakers',
@@ -102,19 +102,21 @@ const LectureManager = {
   async fetchListeners() {
     try {
       const data = await ApiService.request('get_listeners', {
-        params: { user_id: userId }
+        params: { speaker_id: userId }
       });
       if (!data?.listeners) return;
 
-      DOM.listenersList.innerHTML = data.listeners.map(listener => `
-        <div class="list-group-item form-check">
+    DOM.listenersList.innerHTML = data.listeners.map(listener => `
+      <div class="list-group-item d-flex align-items-center">
+        <div class="form-check flex-grow-1">
           <input class="form-check-input" type="checkbox" 
                 id="listener-${listener._id}">
-          <label class="form-check-label" for="listener-${listener._id}">
-            ${listener.name}
+          <label class="form-check-label ms-2" for="listener-${listener._id}">
+            ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
           </label>
         </div>
-      `).join('');
+      </div>
+    `).join('');
     } catch (error) {
       console.error('Failed to fetch listeners:', error);
     }
@@ -165,12 +167,19 @@ const LectureManager = {
 
     const selectedListeners = Array.from(
       document.querySelectorAll('#listenersList input[type="checkbox"]:checked')
-    ).map(checkbox => checkbox.id.replace('listener-', ''));
+    ).map(checkbox => parseInt(checkbox.id.replace('listener-', '')));
+
+    const requestData = {
+        name: `${userId}_${lectureName}`,
+        data: selectedListeners.length > 0 ? selectedListeners : [0]
+    };
+
+    // tg.showAlert(JSON.stringify(requestData));
 
     const result = await ApiService.request('save_lecture', {
-      method: 'POST',
-      data: { userId, lectureName, listeners: selectedListeners }
-    });
+            method: 'POST',
+            data: requestData
+        });
 
     if (result) {
       tg.showAlert('Лекция сохранена!');
@@ -181,9 +190,13 @@ const LectureManager = {
 
   async deleteLecture() {
     const lectureName = DOM.currentLectureTitle.textContent;
+    const requestData = {
+      speaker_id: userId,
+      name: lectureName }
+
     const result = await ApiService.request('delete_lectures', {
-      method: 'POST',
-      data: { userId, lectureName }
+      method: 'DELETE',
+      params: requestData
     });
 
     if (result) {
