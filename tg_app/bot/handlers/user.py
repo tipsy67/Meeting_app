@@ -1,5 +1,5 @@
 import os
-from typing import Annotated
+
 
 from aiogram import Bot, F, Router
 from aiogram.filters import CommandStart
@@ -55,7 +55,13 @@ async def cb_main_menu(callback: CallbackQuery, l10n):
 
 ## SPEAKER MENU
 @user.callback_query(F.data == 'kb_main_speaker')
-async def cb_speaker_menu(callback: CallbackQuery, l10n):
+async def get_webapp(callback: CallbackQuery, l10n):
+
+    await callback.message.edit_text( "webapp",
+                           reply_markup=userkb.get_web_app())
+
+
+async def tg_cb_speaker_menu(callback: CallbackQuery, l10n):
     await callback.message.edit_text(
         l10n.format_value('kb_main_speaker'),
         reply_markup=userkb.get_speaker_keyboard(l10n),

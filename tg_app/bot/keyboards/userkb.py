@@ -1,7 +1,7 @@
 from logging.config import listen
 from typing import Optional
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
 
 def create_buttons(l10n, buttons_data: list[tuple[str, str]]) -> InlineKeyboardMarkup:
@@ -142,3 +142,14 @@ def get_lecture_users_list(
         inline_keyboard=[*kb1.inline_keyboard, *kb2.inline_keyboard]
     )
     return merged_kb
+
+def get_web_app():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="Открыть WebApp",
+                web_app=WebAppInfo(url="https://0i6p1a-37-44-40-134.ru.tuna.am/index.html")
+            )]
+        ]
+    )
+    return keyboard
