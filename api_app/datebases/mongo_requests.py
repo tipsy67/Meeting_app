@@ -103,10 +103,8 @@ async def get_listeners(speaker_id: int):
 
 
 async def save_lecture(data):
-
     speaker_id, lecture_name = data.name.split('_')
     speaker_id = int(speaker_id)
-
     now = datetime.now()
     lecture = await lecture_collection.find_one_and_update(
         {'speaker_id': speaker_id, 'lecture_name': lecture_name},
