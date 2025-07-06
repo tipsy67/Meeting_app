@@ -46,13 +46,16 @@ const DOM = {
   lecturesContainer: document.getElementById('lecturesContainer'),
   lectureNameInput: document.getElementById('lectureName'),
   currentLectureTitle: document.getElementById('currentLectureTitle'),
+  currentEditLectureTitle: document.getElementById('currentEditLectureTitle'),
   newLectureBtn: document.getElementById('newLectureBtn'),
   openLecturesBtn: document.getElementById('openLecturesBtn'),
   saveLectureBtn: document.getElementById('saveLectureBtn'),
   backFromNewLectureBtn: document.getElementById('backFromNewLectureBtn'),
   backFromLecturesBtn: document.getElementById('backFromLecturesBtn'),
   deleteLectureBtn: document.getElementById('deleteLectureBtn'),
-  backFromEditBtn: document.getElementById('backFromEditBtn')
+  backFromEditBtn: document.getElementById('backFromEditBtn'),
+  editListenersBtn: document.getElementById('editListenersBtn'),
+
 };
 
 // Сервис API
@@ -204,6 +207,47 @@ const LectureManager = {
       await this.fetchLectures();
       Navigation.show('lecturesList');
     }
+  },
+
+  async editLectureListeners() {
+    // try {
+      const lectureName = DOM.currentLectureTitle.textContent;
+
+      // 1. Получаем текущих слушателей лекции
+      const lectureData = await ApiService.request('get_listeners_from_lecture', {
+        params: {
+          name: lectureName,
+          speaker_id: userId
+        }
+      });
+
+      // 2. Получаем всех доступных слушателей
+      const allListeners = await ApiService.request('get_listeners', {
+        params: {speaker_id: userId}
+      });
+
+      if (!allListeners?.listeners) return;
+
+      // 3. Отмечаем уже выбранных слушателей
+      const currentListeners = lectureData?.listeners?.map(l => l._id) || [];
+
+      // 4. Показываем форму редактирования
+      DOM.listenersList.innerHTML = allListeners.listeners.map(listener => `
+        <div class="list-group-item d-flex align-items-center">
+          <div class="form-check flex-grow-1">
+            <input class="form-check-input" type="checkbox" 
+                  id="listener-${listener._id}"
+                  ${currentListeners.includes(listener._id) ? 'checked' : ''}>
+            <label class="form-check-label ms-2" for="listener-${listener._id}">
+              ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
+            </label>
+          </div>
+        </div>
+      `).join('');
+
+      // 5. Обновляем UI
+      DOM.currentEditLectureTitle.textContent = `Редактирование: ${lectureName}`;
+      Navigation.show('editLectureForm');
   }
 };
 
@@ -217,6 +261,7 @@ const Navigation = {
     const currentScreen = {
       'mainMenu': DOM.mainMenu,
       'newLectureForm': DOM.newLectureForm,
+      'editLectureForm': DOM.newLectureForm,
       'lecturesList': DOM.lecturesList,
       'editLectureMenu': DOM.editLectureMenu
     }[screen];
@@ -226,6 +271,7 @@ const Navigation = {
     }
 
     if (screen === 'newLectureForm') {
+      DOM.currentEditLectureTitle.textContent = `Новая лекция`;
       LectureManager.fetchListeners().catch(console.error);
     }
     if (screen === 'lecturesList') {
@@ -251,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
   DOM.backFromLecturesBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
   DOM.deleteLectureBtn?.addEventListener('click', () => LectureManager.deleteLecture().catch(console.error));
   DOM.backFromEditBtn?.addEventListener('click', () => Navigation.show('lecturesList'));
-
+  DOM.editListenersBtn?.addEventListener('click', () => LectureManager.editLectureListeners().catch(console.error));
   // Показать главное меню по умолчанию
   Navigation.show('mainMenu');
 });
