@@ -794,6 +794,6 @@ secret_file.json
 secret_file_web.json
 
 templates_test/
-json_referense/
+json_reference/
 credentials/
 .vscode/
