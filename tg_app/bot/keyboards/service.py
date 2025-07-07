@@ -25,6 +25,7 @@ def delete_previous_message(handler: Callable[[CallbackQuery], Awaitable[None]])
 
     return wrapper
 
+
 async def handle_api_response(response, callback: CallbackQuery, l10n=None):
     """
     Обработчик ошибок
@@ -39,3 +40,4 @@ async def handle_api_response(response, callback: CallbackQuery, l10n=None):
         await callback.answer()
         return False
     return True
+

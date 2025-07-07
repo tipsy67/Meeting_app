@@ -1,9 +1,10 @@
 from datetime import datetime
+from fastapi import HTTPException
 
-from bson import Int64, ObjectId
+
 from pymongo import AsyncMongoClient, ReturnDocument
 
-from api_app.schemas import SpeakerListener, SpeakerListenerResponse
+from api_app.schemas import SpeakerListenerResponse
 
 # Подключение к MongoDB
 client = AsyncMongoClient('mongodb://localhost:27017/')
@@ -52,6 +53,33 @@ async def get_all_speakers():
 
     return {'speakers': speakers}
 
+async def get_speakers(listener_id: int):
+    pipeline = [
+        {'$match': {'listener_id': listener_id}},
+        {
+            '$lookup': {
+                'from': users_collection.name,
+                'localField': 'speaker_id',
+                'foreignField': '_id',
+                'as': 'user_data',
+            }
+        },
+        {'$unwind': '$user_data'},
+        {
+            '$project': {
+                '_id': '$speaker_id',
+                'username': '$user_data.username',
+                'full_name': {
+                    '$concat': ['$user_data.first_name', ' ', '$user_data.last_name']
+                },
+            }
+        },
+    ]
+
+    speakers_cursor = await speaker_listener_collection.aggregate(pipeline)
+    speakers = await speakers_cursor.to_list(length=None)
+
+    return {'speakers': speakers}
 
 async def add_listener_to_speaker(data):
     now = datetime.now()
@@ -100,11 +128,10 @@ async def get_listeners(speaker_id: int):
 
     return {'listeners': listeners}
 
-async def save_lecture(data):
 
+async def save_lecture(data):
     speaker_id, lecture_name = data.name.split('_')
     speaker_id = int(speaker_id)
-
     now = datetime.now()
     lecture = await lecture_collection.find_one_and_update(
         {'speaker_id': speaker_id, 'lecture_name': lecture_name},
@@ -116,6 +143,7 @@ async def save_lecture(data):
                 'updated_at': now,
             },
         },
+        projection={'_id': False},
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )
@@ -142,21 +170,32 @@ async def get_all_lectures(user_id: int):
 
 async def get_listeners_from_lecture(speaker_id: int, name: str):
     pipeline = [
-       {'$match': {'speaker_id': speaker_id, 'lecture_name': name }},
-       {'$unwind': '$listeners'},
-       {
+        {'$match': {'speaker_id': speaker_id, 'lecture_name': name}},
+        {'$unwind': '$listeners'},
+        {
             '$lookup': {
                 'from': users_collection.name,
                 'localField': 'listeners',
                 'foreignField': '_id',
-                'as': 'listener_data'
+                'as': 'listener_data',
             }
         },
         {'$unwind': '$listener_data'},
-        {'$replaceRoot': {'newRoot': '$listener_data'}}
+        {'$replaceRoot': {'newRoot': '$listener_data'}},
     ]
-    
+
     listeners_cursor = await lecture_collection.aggregate(pipeline)
     listeners = await listeners_cursor.to_list(length=None)
 
     return {'listeners': listeners}
+
+
+async def delete_lecture(speaker_id: int, lecture_name: str):
+    result = await lecture_collection.find_one_and_delete(
+        {'speaker_id': speaker_id, 'lecture_name': lecture_name},
+        projection={'_id': False},  # это исключение из результата!
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail=f'Lecture {lecture_name} not found')
+
+    return {'deleted': result}

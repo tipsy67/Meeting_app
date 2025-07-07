@@ -15,6 +15,7 @@ class APIPath:
     get_listeners = f'{BASE_URL}/listeners'
     save_lecture = f'{BASE_URL}/save-lecture'
     get_lectures = f'{BASE_URL}/open-lecture'
+    delete_lectures = f'{BASE_URL}/delete-lecture'
     get_listeners_from_lecture = f'{BASE_URL}/listeners-from-lecture'
 
 
@@ -95,6 +96,7 @@ async def save_lecture(name_lecture: str, set_listeners: set[int]):
     print(json)
     return {'json': json}
 
+
 @httpx_request(method='GET', url=APIPath.get_lectures)
 async def get_all_lectures(user_id: int):
     params = {
@@ -103,8 +105,19 @@ async def get_all_lectures(user_id: int):
 
     return {'params': params}
 
+
 @httpx_request(method='GET', url=APIPath.get_listeners_from_lecture)
 async def get_listeners_from_lecture(speaker_id: int, name: str):
+    params = {
+        'speaker_id': speaker_id,
+        'name': name,
+    }
+
+    return {'params': params}
+
+
+@httpx_request(method='DELETE', url=APIPath.delete_lectures, status_code=200)
+async def delete_lectures(speaker_id: int, name: str):
     params = {
         'speaker_id': speaker_id,
         'name': name,
