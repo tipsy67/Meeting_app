@@ -15,6 +15,13 @@ async def get_all_speakers_rt():
 async def get_speakers_rt(listener_id:int):
     return await mongo_requests.get_speakers(listener_id)
 
+@router.delete('/remove-from-listeners', status_code=status.HTTP_200_OK)
+async def remove_from_listeners_rt(listener_id:int, speaker_id:int):
+    result = await mongo_requests.delete_listener_from_speaker(listener_id, speaker_id)
+    result = await mongo_requests.remove_listener_from_all_lectures(listener_id, speaker_id)
+
+    return {"message": f"Слушатель удален из {result['modified']} лекций"}
+
 
 @router.post('/save-lecture', status_code=status.HTTP_200_OK)
 async def save_lecture_rt(data: LectureRequest):

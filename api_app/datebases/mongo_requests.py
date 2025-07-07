@@ -199,3 +199,29 @@ async def delete_lecture(speaker_id: int, lecture_name: str):
         raise HTTPException(status_code=404, detail=f'Lecture {lecture_name} not found')
 
     return {'deleted': result}
+
+async def delete_listener_from_speaker(speaker_id: int, listener_id: int):
+    result = await speaker_listener_collection.find_one_and_delete(
+        {'speaker_id': speaker_id, 'listener_id': listener_id},
+        projection={'_id': False},
+    )
+
+    return {'deleted': result}
+
+
+async def remove_listener_from_all_lectures(listener_id: int, speaker_id: int):
+    """
+    Удаляет слушателя из всех лекций, где он есть в массиве listeners.
+    """
+    result = await lecture_collection.update_many(
+        {
+            "listeners": listener_id,
+            "speaker_id": speaker_id,
+        },
+        {"$pull": {"listeners": listener_id}}
+    )
+
+    return {
+        "matched": result.matched_count,
+        "modified": result.modified_count
+    }
