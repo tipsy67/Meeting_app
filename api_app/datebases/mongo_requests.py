@@ -53,6 +53,33 @@ async def get_all_speakers():
 
     return {'speakers': speakers}
 
+async def get_speakers(listener_id: int):
+    pipeline = [
+        {'$match': {'listener_id': listener_id}},
+        {
+            '$lookup': {
+                'from': users_collection.name,
+                'localField': 'speaker_id',
+                'foreignField': '_id',
+                'as': 'user_data',
+            }
+        },
+        {'$unwind': '$user_data'},
+        {
+            '$project': {
+                '_id': '$speaker_id',
+                'username': '$user_data.username',
+                'full_name': {
+                    '$concat': ['$user_data.first_name', ' ', '$user_data.last_name']
+                },
+            }
+        },
+    ]
+
+    speakers_cursor = await speaker_listener_collection.aggregate(pipeline)
+    speakers = await speakers_cursor.to_list(length=None)
+
+    return {'speakers': speakers}
 
 async def add_listener_to_speaker(data):
     now = datetime.now()

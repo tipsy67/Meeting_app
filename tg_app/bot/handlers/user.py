@@ -40,9 +40,11 @@ async def start(message: Message, l10n):
         )
         return
 
-    await message.answer(
-        l10n.format_value('welcome'), reply_markup=userkb.get_main_keyboard(l10n)
-    )
+    # await message.answer(
+    #     l10n.format_value('welcome'), reply_markup=userkb.get_main_keyboard(l10n)
+    # )
+    await message.answer( l10n.format_value('welcome'),
+                           reply_markup=userkb.get_web_app())
 
 
 # MAIN MENU
@@ -55,13 +57,7 @@ async def cb_main_menu(callback: CallbackQuery, l10n):
 
 ## SPEAKER MENU
 @user.callback_query(F.data == 'kb_main_speaker')
-async def get_webapp(callback: CallbackQuery, l10n):
-
-    await callback.message.edit_text( "webapp",
-                           reply_markup=userkb.get_web_app())
-
-
-async def tg_cb_speaker_menu(callback: CallbackQuery, l10n):
+async def cb_speaker_menu(callback: CallbackQuery, l10n):
     await callback.message.edit_text(
         l10n.format_value('kb_main_speaker'),
         reply_markup=userkb.get_speaker_keyboard(l10n),

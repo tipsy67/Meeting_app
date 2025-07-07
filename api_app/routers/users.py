@@ -11,6 +11,10 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def get_all_speakers_rt():
     return await mongo_requests.get_all_speakers()
 
+@router.get('/speakers-selected', status_code=status.HTTP_200_OK)
+async def get_speakers_rt(listener_id:int):
+    return await mongo_requests.get_speakers(listener_id)
+
 
 @router.post('/save-lecture', status_code=status.HTTP_200_OK)
 async def save_lecture_rt(data: LectureRequest):

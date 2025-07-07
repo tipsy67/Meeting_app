@@ -1,0 +1,56 @@
+/* Базовые стили */
+body {
+  padding: 20px;
+}
+
+/* Стили для скрытия элементов */
+.hidden {
+  display: none !important;
+}
+
+/* Стили для списка слушателей */
+#listenersList {
+  max-height: 60vh; /* Используем vh вместо фиксированных пикселей */
+  overflow-y: auto;
+  scrollbar-width: thin; /* Для Firefox */
+  margin-bottom: 15px;
+}
+
+/* Стили для списка лекций */
+#lecturesContainer {
+  max-height: 70vh;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+/* Стилизация карточек лекций */
+.lecture-card {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Стили для чекбоксов */
+.form-check-label {
+  margin-left: 10px;
+}
+
+/* Стилизация скроллбара (для WebKit браузеров) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
