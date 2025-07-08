@@ -351,6 +351,7 @@ const LectureManager = {
 
         // 5. Обновляем UI
         DOM.currentEditLectureTitle.textContent = `Редактирование: ${lectureName}`;
+        DOM.lectureNameInput.value = lectureName
         Navigation.show('editLectureForm');
     }
 };

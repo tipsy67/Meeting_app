@@ -1,17 +1,13 @@
+
 from datetime import datetime
 from fastapi import HTTPException
 
 
-from pymongo import AsyncMongoClient, ReturnDocument
+from pymongo import ReturnDocument
 
-from api_app.schemas import SpeakerListenerResponse
+from api_app.datebases import config_base as db
+from api_app.schemas.users import SpeakerListenerResponse
 
-# Подключение к MongoDB
-client = AsyncMongoClient('mongodb://localhost:27017/')
-db = client['meeting_app']
-users_collection = db['users']
-speaker_listener_collection = db['speaker_listener']
-lecture_collection = db['lecture']
 
 
 async def set_user(user) -> dict:
@@ -19,7 +15,7 @@ async def set_user(user) -> dict:
     находит пользователя по tg_id или создает нового
     """
     now = datetime.now()
-    user = await users_collection.find_one_and_update(
+    user = await db.users_collection.find_one_and_update(
         {'_id': user.id},
         {
             '$set': {
@@ -48,7 +44,7 @@ async def get_all_speakers():
         },
     ]
 
-    speakers_cursor = await users_collection.aggregate(pipeline)
+    speakers_cursor = await db.users_collection.aggregate(pipeline)
     speakers = await speakers_cursor.to_list(length=None)
 
     return {'speakers': speakers}
@@ -58,7 +54,7 @@ async def get_speakers(listener_id: int):
         {'$match': {'listener_id': listener_id}},
         {
             '$lookup': {
-                'from': users_collection.name,
+                'from': db.users_collection.name,
                 'localField': 'speaker_id',
                 'foreignField': '_id',
                 'as': 'user_data',
@@ -76,14 +72,14 @@ async def get_speakers(listener_id: int):
         },
     ]
 
-    speakers_cursor = await speaker_listener_collection.aggregate(pipeline)
+    speakers_cursor = await db.speaker_listener_collection.aggregate(pipeline)
     speakers = await speakers_cursor.to_list(length=None)
 
     return {'speakers': speakers}
 
 async def add_listener_to_speaker(data):
     now = datetime.now()
-    link = await speaker_listener_collection.find_one_and_update(
+    link = await db.speaker_listener_collection.find_one_and_update(
         {'speaker_id': data.speaker_id, 'listener_id': data.listener_id},
         {
             '$setOnInsert': {
@@ -105,7 +101,7 @@ async def get_listeners(speaker_id: int):
         {'$match': {'speaker_id': speaker_id}},
         {
             '$lookup': {
-                'from': users_collection.name,
+                'from': db.users_collection.name,
                 'localField': 'listener_id',
                 'foreignField': '_id',
                 'as': 'user_data',
@@ -123,7 +119,7 @@ async def get_listeners(speaker_id: int):
         },
     ]
 
-    listeners_cursor = await speaker_listener_collection.aggregate(pipeline)
+    listeners_cursor = await db.speaker_listener_collection.aggregate(pipeline)
     listeners = await listeners_cursor.to_list(length=None)
 
     return {'listeners': listeners}
@@ -133,7 +129,7 @@ async def save_lecture(data):
     speaker_id, lecture_name = data.name.split('_')
     speaker_id = int(speaker_id)
     now = datetime.now()
-    lecture = await lecture_collection.find_one_and_update(
+    lecture = await db.lecture_collection.find_one_and_update(
         {'speaker_id': speaker_id, 'lecture_name': lecture_name},
         {
             '$set': {
@@ -162,7 +158,7 @@ async def get_all_lectures(user_id: int):
         },
         {'$sort': {'update_at': -1}},
     ]
-    lectures_cursor = await lecture_collection.aggregate(pipeline)
+    lectures_cursor = await db.lecture_collection.aggregate(pipeline)
     lectures = await lectures_cursor.to_list(length=None)
 
     return {'lectures': lectures}
@@ -174,7 +170,7 @@ async def get_listeners_from_lecture(speaker_id: int, name: str):
         {'$unwind': '$listeners'},
         {
             '$lookup': {
-                'from': users_collection.name,
+                'from': db.users_collection.name,
                 'localField': 'listeners',
                 'foreignField': '_id',
                 'as': 'listener_data',
@@ -184,14 +180,14 @@ async def get_listeners_from_lecture(speaker_id: int, name: str):
         {'$replaceRoot': {'newRoot': '$listener_data'}},
     ]
 
-    listeners_cursor = await lecture_collection.aggregate(pipeline)
+    listeners_cursor = await db.lecture_collection.aggregate(pipeline)
     listeners = await listeners_cursor.to_list(length=None)
 
     return {'listeners': listeners}
 
 
 async def delete_lecture(speaker_id: int, lecture_name: str):
-    result = await lecture_collection.find_one_and_delete(
+    result = await db.lecture_collection.find_one_and_delete(
         {'speaker_id': speaker_id, 'lecture_name': lecture_name},
         projection={'_id': False},  # это исключение из результата!
     )
@@ -201,7 +197,7 @@ async def delete_lecture(speaker_id: int, lecture_name: str):
     return {'deleted': result}
 
 async def delete_listener_from_speaker(speaker_id: int, listener_id: int):
-    result = await speaker_listener_collection.find_one_and_delete(
+    result = await db.speaker_listener_collection.find_one_and_delete(
         {'speaker_id': speaker_id, 'listener_id': listener_id},
         projection={'_id': False},
     )
@@ -213,7 +209,7 @@ async def remove_listener_from_all_lectures(listener_id: int, speaker_id: int):
     """
     Удаляет слушателя из всех лекций, где он есть в массиве listeners.
     """
-    result = await lecture_collection.update_many(
+    result = await db.lecture_collection.update_many(
         {
             "listeners": listener_id,
             "speaker_id": speaker_id,
