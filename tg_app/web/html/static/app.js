@@ -25,7 +25,8 @@ const API_CONFIG = {
         save_lecture: '/save-lecture',
         get_lectures: '/open-lecture',
         delete_lectures: '/delete-lecture',
-        get_listeners_from_lecture: '/listeners-from-lecture'
+        get_listeners_from_lecture: '/listeners-from-lecture',
+        remove_from_listeners: '/remove-from-listeners'
     },
     getUrl(endpoint) {
         return `${this.BASE_URL}${this.ENDPOINTS[endpoint]}`;
@@ -93,8 +94,7 @@ const ApiService = {
             });
 
             if (!response.ok) {
-                const error = await this.parseError(response);
-                throw error;
+                return this.handleError(await this.parseError(response));
             }
             return await response.json();
         } catch (error) {
@@ -148,7 +148,7 @@ const ListenerManager = {
             });
             if (!data?.speakers) return;
 
-        DOM.speakersToLeaveList.innerHTML = data.speakers.map(speaker => `
+            DOM.speakersToLeaveList.innerHTML = data.speakers.map(speaker => `
             <div class="list-group-item d-flex align-items-center">
                 <div class="form-check flex-grow-1">
                     <input class="form-check-input" type="radio" 
@@ -191,12 +191,13 @@ const ListenerManager = {
             return;
         }
 
-        const result = await ApiService.request('remove_from_lecture', {
-            method: 'POST',
-            data: {listener_id: userId, speaker_id: selectedLecture.value}
+        const result = await ApiService.request('remove_from_listeners', {
+            method: 'DELETE',
+            params: {listener_id: userId, speaker_id: selectedLecture.value}
         });
         if (result) {
             tg.showAlert('Вы успешно отписались от лектора!');
+            tg.showAlert(JSON.stringify(result.message));
             Navigation.show('listenerMenu');
         }
     }
@@ -350,6 +351,7 @@ const LectureManager = {
 
         // 5. Обновляем UI
         DOM.currentEditLectureTitle.textContent = `Редактирование: ${lectureName}`;
+        DOM.lectureNameInput.value = lectureName
         Navigation.show('editLectureForm');
     }
 };
