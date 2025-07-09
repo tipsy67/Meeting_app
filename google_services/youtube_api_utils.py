@@ -109,7 +109,7 @@ async def create_broadcast_async(
                     headers=headers,
                 )
                 data = response.json()
-                return f"https://www.youtube.com/live/{data["id"]}"
+                return data.get("id")
 
         except Exception as e:
             print(f"Error with response: {e}")
