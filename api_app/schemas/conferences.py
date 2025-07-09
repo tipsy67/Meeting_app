@@ -7,34 +7,26 @@ from typing import Optional, Annotated
 from pydantic import BaseModel, Field
 
 
-class UserModel(BaseModel):
-    """
-    User schema representing a participant in the conference.
-    This schema includes:
-        id: int - telegram id
-        first name: str (optional) - telegram first_name
-        last name: str (optional) - telegram last_name
-        username: str (optional) - telegram username
-        is_speaker: bool - for set role speaker
-        speaker_stream_key: - stream key if user is speaker
-
-    * use alias _id only for searalization for MongoDB
-    """
-    id: Annotated[int, Field(serialization_alias="_id")]
-    first_name: str
-    last_name: Optional[str] = None
-    username: Optional[str] = None
-    is_speaker: bool = False
-
-
 
 class StreamModel(BaseModel):
     """
     Model for Stream object
     """
-    id: Annotated[str, Field(serialization_alias="_id")]
+    id: Annotated[str, Field(alias="_id")]
     user_id: int
     stream_key: str
+
+
+class BroadcastModel(BaseModel):
+    """
+    Model for YouTube Broadcast object
+    """
+    id: str
+    title: str
+    start_datetime: datetime
+    end_datetime: datetime
+    stream_id: str
+    recording_url: Optional[str] = None
 
 
 
@@ -51,11 +43,21 @@ class ConferenceModel(BaseModel):
             serialization_alias="_id"
         )
     ]
-    speaker_id: str
+    speaker_id: int
     users: list[int]
-    speaker_id: str
     broadcast_id: str
+    stream_key: str
     recording_url: str
     start_datetime: datetime
     end_datetime: datetime
     is_ended: bool = False
+
+
+class ConferenceCreateModel(BaseModel):
+    """
+    Model for creating a conference
+    """
+    speaker_id: int
+    listeners: list[int]
+    start_datetime: datetime
+    end_datetime: datetime
