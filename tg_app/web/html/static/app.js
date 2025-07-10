@@ -15,18 +15,22 @@ const initTelegramWebApp = () => {
 
 // Конфигурация API
 const API_CONFIG = {
-    BASE_URL: 'https://ijqmrk-37-44-40-134.ru.tuna.am/users',
+    BASE_URL: 'https://9rm3nw-37-44-40-134.ru.tuna.am',
     ENDPOINTS: {
-        set_user: '',
-        get_speakers: '/speakers',
-        get_selected_speakers: '/speakers-selected',
-        add_to_speaker: '/add-to-speaker',
-        get_listeners: '/listeners',
-        save_lecture: '/save-lecture',
-        get_lectures: '/open-lecture',
-        delete_lectures: '/delete-lecture',
-        get_listeners_from_lecture: '/listeners-from-lecture',
-        remove_from_listeners: '/remove-from-listeners'
+        set_user: '/users',
+        get_speakers: '/users/speakers',
+        add_to_speaker: '/users/speakers/listeners',
+
+        get_listeners: '/users/listeners',
+        get_selected_speakers: '/users/listeners/speakers',
+        remove_from_listeners: '/users/listeners/speakers',
+
+        save_lecture: '/lectures',
+        get_lectures: '/lectures',
+        delete_lectures: '/lectures',
+
+        get_listeners_from_lecture: '/lectures/listeners',
+        remove_from_all_lectures: '/lectures/listeners-unsubscribe'
     },
     getUrl(endpoint) {
         return `${this.BASE_URL}${this.ENDPOINTS[endpoint]}`;
@@ -122,24 +126,40 @@ const ApiService = {
 const ListenerManager = {
     async fetchSpeakers() {
         try {
-            const data = await ApiService.request('get_speakers');
-            if (!data?.speakers) return;
+            // Fetch both speakers and selected speakers in parallel
+            const [speakersData, selectedSpeakersData] = await Promise.all([
+                ApiService.request('get_speakers'),
+                ApiService.request('get_selected_speakers',{
+                params: {listener_id: userId}})
+            ]);
 
-            DOM.speakersList.innerHTML = data.speakers.map(speaker => `
-        <div class="list-group-item d-flex align-items-center">
-          <div class="form-check flex-grow-1">
-            <input class="form-check-input" type="radio" name="speaker" 
-                  id="speaker-${speaker._id}" value="${speaker._id}">
-            <label class="form-check-label ms-2" for="speaker-${speaker._id}">
-              ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
-            </label>
-          </div>
-        </div>
-      `).join('');
+            if (!speakersData?.speakers) return;
+
+            const selectedSpeakerIds = selectedSpeakersData?.speakers?.map(s => s._id) || [];
+
+            DOM.speakersList.innerHTML = speakersData.speakers.map(speaker => {
+                const isSelected = selectedSpeakerIds.includes(speaker._id);
+
+                return `
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="form-check flex-grow-1">
+                            <input class="form-check-input" type="radio" name="speaker" 
+                                  id="speaker-${speaker._id}" value="${speaker._id}"
+                                  ${isSelected ? 'disabled' : ''}>
+                            <label class="form-check-label ms-2" for="speaker-${speaker._id}" 
+                                  ${isSelected ? 'style="opacity: 0.5;"' : ''}>
+                                ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
+                                ${isSelected ? ' ✅' : ''}
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         } catch (error) {
             console.error('Failed to fetch speakers:', error);
         }
     },
+
 
     async fetchMySpeakers() {
         try {
@@ -190,8 +210,7 @@ const ListenerManager = {
             tg.showAlert('Выберите лектора!');
             return;
         }
-
-        const result = await ApiService.request('remove_from_listeners', {
+        const result = await ApiService.request('remove_from_all_lectures', {
             method: 'DELETE',
             params: {listener_id: userId, speaker_id: selectedLecture.value}
         });
@@ -231,7 +250,7 @@ const LectureManager = {
     async fetchLectures() {
         try {
             const data = await ApiService.request('get_lectures', {
-                params: {user_id: userId}
+                params: {speaker_id: userId}
             });
             if (!data?.lectures) return;
 
