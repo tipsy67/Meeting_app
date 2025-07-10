@@ -146,9 +146,9 @@ async def save_lecture(data):
     return lecture
 
 
-async def get_all_lectures(user_id: int):
+async def get_all_lectures(speaker_id: int):
     pipeline = [
-        {'$match': {'speaker_id': user_id}},
+        {'$match': {'speaker_id': speaker_id}},
         {
             '$project': {
                 '_id': '$speaker_id',
@@ -196,7 +196,7 @@ async def delete_lecture(speaker_id: int, lecture_name: str):
 
     return {'deleted': result}
 
-async def delete_listener_from_speaker(speaker_id: int, listener_id: int):
+async def delete_listener_from_speaker(listener_id: int, speaker_id: int):
     result = await db.speaker_listener_collection.find_one_and_delete(
         {'speaker_id': speaker_id, 'listener_id': listener_id},
         projection={'_id': False},
