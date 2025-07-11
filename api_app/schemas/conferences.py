@@ -6,20 +6,68 @@ from datetime import datetime
 from typing import Optional, Annotated
 from pydantic import BaseModel, Field
 
+# Models for conference management
+
+class ConferenceCreateModel(BaseModel):
+    """
+    Base Model for Meeting Conference
+    *speakers & listeners are user IDs
+    """
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), serialization_alias="_id")
+    speaker_id: int
+    listeners: list[int]
+    start_datetime: datetime
+    end_datetime: datetime
+    recording: bool = False
+    is_ended: bool = False
 
 
-class StreamModel(BaseModel):
+class ConferenceModel(ConferenceCreateModel):
+    """
+    Base Model for Meeting Conference
+    *speakers & listeners are user IDs
+    """
+    conference_link: str
+
+class ConferenceOutputModel(ConferenceModel):
+    """
+    Base Model for Meeting Conference
+    Output data for routers
+    *speakers & listeners are user IDs
+    """
+    recording_url: str = None
+
+
+# Models for recording management
+
+class RecordingModel(BaseModel):
+    """
+    Base Model for Recording object
+    """
+    conference_id: str
+    recording_url: str
+
+
+class YoutubeStreamModel(BaseModel):
     """
     Model for Stream object
+    For YouTube Live Streaming
+    For conference which cant be recorded,
+    But can be streamed to YouTube
+
+    * Need save this model to database,
+    because we need to link it with user for future reuse
     """
     id: Annotated[str, Field(alias="_id")]
     user_id: int
     stream_key: str
 
 
-class BroadcastModel(BaseModel):
+class YoutubeBroadcastModel(BaseModel):
     """
     Model for YouTube Broadcast object
+    For conference which cant be recorded,
+    But can be streamed to YouTube
     """
     id: str
     title: str
@@ -29,35 +77,11 @@ class BroadcastModel(BaseModel):
     recording_url: Optional[str] = None
 
 
-
-class ConferenceModel(BaseModel):
+class JitsiRecordingModel(RecordingModel):
     """
-    Model for Jitsi Conference
-    Link for user:
-        https://host_conference/<conference_id>?token=<user_token>
+    Model for Jitsi Recording object
+    * Contains stream key and broadcast ID
+    for send to Jitsi API when start recording
     """
-    id: Annotated[
-        str,
-        Field(
-            default_factory=lambda: str(uuid.uuid4()),
-            serialization_alias="_id"
-        )
-    ]
-    speaker_id: int
-    users: list[int]
-    broadcast_id: str
     stream_key: str
-    recording_url: str
-    start_datetime: datetime
-    end_datetime: datetime
-    is_ended: bool = False
-
-
-class ConferenceCreateModel(BaseModel):
-    """
-    Model for creating a conference
-    """
-    speaker_id: int
-    listeners: list[int]
-    start_datetime: datetime
-    end_datetime: datetime
+    broadcast_id: str
