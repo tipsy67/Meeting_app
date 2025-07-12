@@ -8,6 +8,7 @@ from api_app.schemas.conferences import ConferenceCreateModel, ConferenceModel, 
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.settings import JITSI_BACKEND, GOOGLE_MEET_BACKEND
 from google_services.youtube_api_utils import create_broadcast_async
+from google_services.calendar_api_utils import create_event
 
 
 class JitsiConferenceBackend:
@@ -99,7 +100,15 @@ class GoogleMeetConferenceBackend:
         """
         Get the conference link for Google Meet.
         """
-        return f"{GOOGLE_MEET_BACKEND["host"]}/{self.data.id}"
+        event = create_event(
+            summary=self.data.id,
+            start_time=self.data.start_datetime.isoformat(),
+            end_time=self.data.end_datetime.isoformat(),
+        )
+        if not event:
+            raise ValueError("Failed to create Google Meet event.")
+        
+        return f"{event}"
 
     @property
     def details(self) -> ConferenceModel:

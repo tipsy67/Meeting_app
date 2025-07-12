@@ -8,14 +8,17 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-
 SCOPES = [
     "https://www.googleapis.com/auth/youtube",
-    "https://www.googleapis.com/auth/calendar"
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/calendar.app.created",
+    "https://www.googleapis.com/auth/calendar.events.owned",
     ]
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 CRED_PATH = os.path.join(CURRENT_DIR, "credentials", "credentials.json")
+SECRET_FILE_PATH = os.path.join(CURRENT_DIR, "credentials", "secret_file.json")
 
 def get_access_token():
     """
@@ -39,12 +42,14 @@ def get_access_token():
                 print(f"Error refresh token: {e}")
         else:
             try:
+                print("No valid credentials found, starting flow...")
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    CRED_PATH, SCOPES
+                    SECRET_FILE_PATH, SCOPES
                 )
                 creds = flow.run_local_server(port=0)
             except Exception as e:
                 print(f"Error to flow: {e}")
+                return
         # Save the credentials for the next run
         with open(CRED_PATH, "w",
                   encoding="utf-8") as token:
