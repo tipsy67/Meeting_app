@@ -7,7 +7,7 @@ from google_services.api_access import get_access_token
 import httpx
 
 
-def create_event(
+async def create_event(
         summary: str,
         start_time: str,
         end_time: str,
@@ -54,9 +54,9 @@ def create_event(
         }
     }
 
-    with httpx.Client() as client:
+    async with httpx.AsyncClient() as client:
         try:
-            response = client.post(
+            response = await client.post(
                 url="https://www.googleapis.com/calendar/v3/calendars/primary/events",
                 params=params,
                 json=event_data,

@@ -18,8 +18,11 @@ async def get_stream_by_user_id(user_id: int) -> YoutubeStreamModel:
     Get stream object by user id
     """
     stream = await stream_collection.find_one({"user_id": user_id})
-    if not stream:
+    print(stream)
+    if stream is None:
+        print("not stream found, creating new one")
         stream_data = await create_stream_async(title=f"stream_for#{user_id}")
+        print(stream_data)
         if stream_data:
             new_stream = YoutubeStreamModel(
                 id=stream_data["id"],

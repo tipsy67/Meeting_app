@@ -46,6 +46,7 @@ async def create_stream_async(
                 headers=headers,
             )
             data = response.json()
+            print("Stream created successfully:", data)
             return {
                 "id": data["id"],
                 "stream_key": data["cdn"]["ingestionInfo"]["streamName"],

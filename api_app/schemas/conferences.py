@@ -75,13 +75,3 @@ class YoutubeBroadcastModel(BaseModel):
     end_datetime: datetime
     stream_id: str
     recording_url: Optional[str] = None
-
-
-class JitsiRecordingModel(RecordingModel):
-    """
-    Model for Jitsi Recording object
-    * Contains stream key and broadcast ID
-    for send to Jitsi API when start recording
-    """
-    stream_key: str
-    broadcast_id: str

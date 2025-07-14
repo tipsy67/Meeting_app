@@ -8,7 +8,7 @@ load_dotenv()
 
 # Backend for conference management
 
-CONFERENCE_BACKEND = "google_meet" # jitsi | google_meet
+CONFERENCE_BACKEND = "jitsi" # jitsi | google_meet
 
 JITSI_BACKEND = {
     "host": os.getenv("JITSI_HOST", "https://meet.jit.si"),
