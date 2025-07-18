@@ -14,14 +14,14 @@ async def get_user(tg_user_id: int) -> UserResponse:
     """
     находит пользователя по tg_id
     """
-    user: UserResponse = await db.users_collection.find_one({'_id': tg_user_id})
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+    if user := await db.users_collection.find_one({'_id': tg_user_id}):
+        return UserResponse(**user)
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"User {tg_user_id} not found")
-    return user
 
 
-async def set_user(tg_user: UserCreateUpdate) -> dict:
+async def set_user(tg_user: UserCreateUpdate) -> UserResponse:
     """
     находит пользователя по tg_id для изменения данных о нем или создает нового
     """
@@ -40,7 +40,7 @@ async def set_user(tg_user: UserCreateUpdate) -> dict:
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )
-    return user
+    return UserResponse(**user)
 
 
 async def get_all_speakers():
