@@ -4,27 +4,38 @@ from fastapi import HTTPException
 
 
 from pymongo import ReturnDocument
+from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import SpeakerListenerResponse
+from api_app.schemas.users import SpeakerListenerResponse, UserCreateUpdate
 
 
-
-async def set_user(user) -> dict:
+async def get_user(tg_user_id: int) -> dict:
     """
-    находит пользователя по tg_id или создает нового
+    находит пользователя по tg_id
+    """
+    user = await db.users_collection.find_one({'_id': tg_user_id})
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User {tg_user_id} not found")
+    return user
+
+
+async def set_user(tg_user: UserCreateUpdate) -> dict:
+    """
+    находит пользователя по tg_id для изменения данных о нем или создает нового
     """
     now = datetime.now()
     user = await db.users_collection.find_one_and_update(
-        {'_id': user.id},
+        {'_id': tg_user.id},
         {
             '$set': {
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
+                'username': tg_user.username,
+                'first_name': tg_user.first_name,
+                'last_name': tg_user.last_name,
                 'last_activity': now,
             },
-            '$setOnInsert': {'_id': user.id, 'created_at': now, 'is_active': True},
+            '$setOnInsert': {'_id': tg_user.id, 'created_at': now, 'is_active': True},
         },
         upsert=True,
         return_document=ReturnDocument.AFTER,
