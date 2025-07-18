@@ -14,7 +14,7 @@ async def get_user_rt(tg_user_id: int) -> UserResponse:
 
 
 @router.post('', status_code=status.HTTP_200_OK)
-async def set_user_rt(tg_user: UserCreateUpdate):
+async def set_user_rt(tg_user: UserCreateUpdate) -> UserResponse:
     return await db.set_user(tg_user)
 
 
