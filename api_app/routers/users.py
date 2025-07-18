@@ -8,6 +8,11 @@ from api_app.schemas.users import SpeakerListener, UserCreateUpdate, LectureRequ
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+@router.get('', status_code=status.HTTP_200_OK)
+async def get_user_rt(tg_user_id: int):
+    return await db.get_user(tg_user_id)
+
+
 @router.post('', status_code=status.HTTP_200_OK)
 async def set_user_rt(tg_user: UserCreateUpdate):
     return await db.set_user(tg_user)
