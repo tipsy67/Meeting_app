@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from bson import ObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, field_validator, Field
 from typing_extensions import Optional
 
 
@@ -13,12 +13,13 @@ class UserCreateUpdate(BaseModel):
 
 
 class UserResponse(UserCreateUpdate):
+    id: int = Field(alias="_id")
     created_at: datetime
     last_activity: datetime
     is_active: bool
-    is_admin: Optional[bool] = None
-    is_speaker: Optional[bool] = None
-    is_banned: Optional[str] = None
+    is_admin: bool = False
+    is_speaker: bool = False
+    is_banned: bool = False
 
 
 class SpeakerListener(BaseModel):

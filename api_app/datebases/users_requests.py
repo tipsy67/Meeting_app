@@ -7,14 +7,14 @@ from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import SpeakerListenerResponse, UserCreateUpdate
+from api_app.schemas.users import SpeakerListenerResponse, UserCreateUpdate, UserResponse
 
 
-async def get_user(tg_user_id: int) -> dict:
+async def get_user(tg_user_id: int) -> UserResponse:
     """
     находит пользователя по tg_id
     """
-    user = await db.users_collection.find_one({'_id': tg_user_id})
+    user: UserResponse = await db.users_collection.find_one({'_id': tg_user_id})
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"User {tg_user_id} not found")
