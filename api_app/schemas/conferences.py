@@ -22,12 +22,33 @@ class ConferenceCreateModel(BaseModel):
     is_ended: bool = False
 
 
+class ConferenceParticipantCreate(BaseModel):
+    """
+    Model for convert user_id to Participant object
+    With token for conference auth
+
+    *id - auto generate token for auth at conference
+        send link to conference with parametr:
+        http://conference_url/<conference_id>?<participant_id>
+    """
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), serialization_alias="_id")
+    user_id: int
+
+class ConferenceParticipant(ConferenceParticipantCreate):
+    """
+    Model of Participant for db & output
+    """
+    id: str = Field(alias="_id")
+
+
 class ConferenceModel(ConferenceCreateModel):
     """
     Base Model for Meeting Conference
     *speakers & listeners are user IDs
     """
+    id: str = Field(alias="_id")
     conference_link: str
+    listeners: list[ConferenceParticipant]
 
 class ConferenceOutputModel(ConferenceModel):
     """

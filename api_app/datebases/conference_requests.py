@@ -85,6 +85,7 @@ async def get_conference(conference_id: str) -> ConferenceModel | ErrorResponseM
     """
     try:
         conference = await conference_collection.find_one({"_id": conference_id})
+        print(conference)
         if not conference:
             return ErrorResponseModel(
                 detail="Conference not found",

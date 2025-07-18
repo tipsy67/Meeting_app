@@ -2,7 +2,7 @@
 Module for managing Jitsi conference operations.
 """
 from api_app.settings import JITSI_BACKEND
-from api_app.schemas.conferences import ConferenceCreateModel, ConferenceModel, ConferenceOutputModel, RecordingModel
+from api_app.schemas.conferences import ConferenceCreateModel, ConferenceModel, ConferenceOutputModel, RecordingModel, ConferenceParticipant
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.datebases import conference_requests as db_requests
 from api_app.datebases.conference_requests import get_stream_by_user_id
@@ -44,7 +44,7 @@ async def create_jitsi_conference(conference: ConferenceCreateModel) -> Conferen
     conference_db = ConferenceModel(
         id=conference.id,
         speaker_id=conference.speaker_id,
-        listeners=conference.listeners,
+        listeners=[ConferenceParticipant(user_id) for user_id in conference.listeners],
         start_datetime=conference.start_datetime,
         end_datetime=conference.end_datetime,
         conference_link=f"{JITSI_BACKEND['host']}/{conference.id}",

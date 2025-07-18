@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api_app.routers import users, lectures
+from api_app.routers import users, lectures, conference
 from api_app.schemas.users import SpeakerListener
 
 app = FastAPI()
@@ -32,3 +32,4 @@ async def root():
 
 app.include_router(users.router)
 app.include_router(lectures.router)
+app.include_router(conference.router)

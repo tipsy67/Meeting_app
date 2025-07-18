@@ -1,7 +1,7 @@
 """
 Module for managing Google Meet conference operations.
 """
-from api_app.schemas.conferences import ConferenceCreateModel, ConferenceModel, ConferenceOutputModel, RecordingModel
+from api_app.schemas.conferences import ConferenceCreateModel, ConferenceModel, ConferenceOutputModel, ConferenceParticipant
 from api_app.schemas.errors import ErrorResponseModel
 from google_services.calendar_api_utils import create_event
 
@@ -24,7 +24,7 @@ async def create_goole_meet_conference(conference: ConferenceCreateModel) -> Con
     conference_db = ConferenceModel(
         id=conference.id,
         speaker_id=conference.speaker_id,
-        listeners=conference.listeners,
+        listeners=[ConferenceParticipant(user_id) for user_id in conference.listeners],
         start_datetime=conference.start_datetime,
         end_datetime=conference.end_datetime,
         conference_link=event,

@@ -1,5 +1,6 @@
 """
 Module for manage Participants
+LiveKit API
 """
 from livekit.api import LiveKitAPI, ListParticipantsRequest
 from live_kit_app.config import LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL
