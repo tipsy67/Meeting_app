@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import ORJSONResponse
 from api_app.routers import users, lectures
-from api_app.schemas.users import SpeakerListener
 
-app = FastAPI()
+
+app = FastAPI(
+    default_response_class=ORJSONResponse,
+)
 
 origins = [
     "http://localhost",
