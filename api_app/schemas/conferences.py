@@ -13,8 +13,8 @@ class ConferenceCreateModel(BaseModel):
     Base Model for Meeting Conference
     *speakers & listeners are user IDs
     """
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), serialization_alias="_id")
-    speaker_id: int
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    speaker: int
     listeners: list[int]
     start_datetime: datetime
     end_datetime: datetime
@@ -31,14 +31,22 @@ class ConferenceParticipantCreate(BaseModel):
         send link to conference with parametr:
         http://conference_url/<conference_id>?<participant_id>
     """
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), serialization_alias="_id")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: int
+
 
 class ConferenceParticipant(ConferenceParticipantCreate):
     """
     Model of Participant for db & output
     """
-    id: str = Field(alias="_id")
+    id: str = Field(serialization_alias="_id")
+
+
+class ConferenceParticipantOutput(ConferenceParticipant):
+    """
+    Model of Participant for db & output
+    """
+    id: str = Field(validation_alias="_id")
 
 
 class ConferenceModel(ConferenceCreateModel):
@@ -46,9 +54,12 @@ class ConferenceModel(ConferenceCreateModel):
     Base Model for Meeting Conference
     *speakers & listeners are user IDs
     """
-    id: str = Field(alias="_id")
+    id: str = Field(serialization_alias="_id")
     conference_link: str
+    recording_url: str | None = None
+    speaker: ConferenceParticipant
     listeners: list[ConferenceParticipant]
+
 
 class ConferenceOutputModel(ConferenceModel):
     """
@@ -56,7 +67,9 @@ class ConferenceOutputModel(ConferenceModel):
     Output data for routers
     *speakers & listeners are user IDs
     """
-    recording_url: str = None
+    id: str = Field(validation_alias="_id")
+    speaker: ConferenceParticipantOutput
+    listeners: list[ConferenceParticipantOutput]
 
 
 # Models for recording management

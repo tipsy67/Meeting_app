@@ -17,7 +17,7 @@ conference_creators: Dict[str, Callable] = {
 
 
 
-async def create_conference(backends, conference: ConferenceCreateModel) -> ConferenceOutputModel | ErrorResponseModel:
+async def   create_conference(backends, conference: ConferenceCreateModel) -> ConferenceOutputModel | ErrorResponseModel:
     """
     Create a conference using the specified backend.
     """

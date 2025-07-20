@@ -2,20 +2,24 @@ import { VideoConference } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { useState, useEffect } from 'react';
 import { LiveKitRoom } from '@livekit/components-react';
+import { WaitingModerator } from './WaitingModerator';
+import { StartConference } from './StartConference';
 
 
-export const Conference = ({conference, participant}) => {
+export const Conference = ({conference, participant, role}) => {
   localStorage.setItem("conference", JSON.stringify(conference));
   localStorage.setItem("participant", JSON.stringify(participant));
+  localStorage.setItem("role", JSON.stringify(role));
 
   const identity = participant.first_name;
+  const userId = participant.id;
   const room = conference.id;
-  const is_speaker = participant?.is_speaker || false;
+
 
   const [token, setToken] = useState(null);
   
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/get-token?name=${identity}&room=${room}&is_speaker=${is_speaker}`)
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/get-token?user_id=${userId}&name=${identity}&room=${room}&is_speaker=${role === "speaker"}`)
       .then(res => res.json())
       .then(data => setToken(data.access_token));
   }, []);
@@ -30,7 +34,7 @@ export const Conference = ({conference, participant}) => {
         video={true}
         audio={true}
       >
-        <VideoConference/>
+        <StartConference/>
       </LiveKitRoom>
   );
 };

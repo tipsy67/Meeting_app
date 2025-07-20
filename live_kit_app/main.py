@@ -21,16 +21,16 @@ app.add_middleware(
 
 
 @app.get("/get-token")
-def get_token_rt(name: str, room: str, is_speaker: bool = False):
+def get_token_rt(user_id: int, name: str, room: str, is_speaker: bool = False):
     """
     Genereate user`s token for room
     """
-    response = get_token(name=name, room=room, is_speaker=is_speaker)
+    response = get_token(user_id=user_id, name=name, room=room, is_speaker=is_speaker)
     return {"access_token": response}
 
 
 @app.get("/check_conference/{conference_id}/{participant_id}")
-async def check_conference(conference_id: str, participant_id: str):
+async def check_conference(conference_id: str, participant_id: str): # -> Conf | Error
     """
     - Check conference (exist | time | is_ended)
         *Send request to api_app: <api_app_host>/conference/<conference_id>
@@ -59,7 +59,33 @@ async def check_conference(conference_id: str, participant_id: str):
                         "status": "expired",
                         "detail": "Conference is ended"
                     }
-                
+                # check user is speaker
+                speaker = data.get("speaker")
+                if not speaker:
+                    JSONResponse(
+                        content={
+                            "error": "Speaker not found"
+                        },
+                        status_code=404
+                    )
+                if speaker.get("id") == participant_id:
+                    speaker_id = speaker.get("user_id")
+                    speaker_response = await client.get(f"{API_API_URL}/conferences/get_user_detail/{speaker_id}")
+                    if speaker_response.status_code == 200:
+                        return {
+                            "status": "success",
+                            "detail": {
+                                "conference": data,
+                                "role": "speaker",
+                                "participant": speaker_response.json()
+                            }
+                        }
+                    return JSONResponse(
+                        content={
+                            "error": "Error with connecting server"
+                        },
+                        status_code=400
+                    )
                 # check user exist at listeners
                 listeners = data.get("listeners")
                 if listeners:
@@ -81,9 +107,11 @@ async def check_conference(conference_id: str, participant_id: str):
                                     "status": "success",
                                     "detail": {
                                         "conference": data,
+                                        "role": "listener",
                                         "participant": user_response.json()
                                     }
                                 }
+                                
                             return JSONResponse(
                                 content={
                                     "error": "Error with connecting server"
@@ -103,16 +131,25 @@ async def check_conference(conference_id: str, participant_id: str):
                 }
             return response.json()
         except Exception as e:
-            return JSONResponse(
+            return JSONResponse( # поменять на raise
                 content={
                     "error": str(e)
                 },
                 status_code=400
             )
+        
+
+# check is moderator ready
+@app.get("/is-moderator-ready/{conference_id}")
+async def is_moderator_ready(conference_id: str):
+    """
+    Check - is moderator ready (speaker at conference room)
+    Used LiveKit API
+    """
+    # get participant list
+    # check exist speaker at participant list
+    pass
 
 
-#TODO:
-    # check is moderator ready
-    # send chat message to tg
 
-#TODO: add websocket for waiting moderator
+#TODO: send chat message to tg

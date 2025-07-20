@@ -1,7 +1,7 @@
 """
 Module for requesting to MongoDB for conference data
 """
-from api_app.schemas.conferences import ConferenceModel, YoutubeStreamModel, RecordingModel
+from api_app.schemas.conferences import ConferenceModel, ConferenceOutputModel, YoutubeStreamModel, RecordingModel
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.datebases import config_base as db
 
@@ -77,7 +77,7 @@ async def insert_conference(conference: ConferenceModel) -> ConferenceModel  | E
             status_code=500
         )
 
-async def get_conference(conference_id: str) -> ConferenceModel | ErrorResponseModel:
+async def get_conference(conference_id: str) -> ConferenceOutputModel | ErrorResponseModel:
     """
     Get conference by id
     :param conference_id:
@@ -85,13 +85,12 @@ async def get_conference(conference_id: str) -> ConferenceModel | ErrorResponseM
     """
     try:
         conference = await conference_collection.find_one({"_id": conference_id})
-        print(conference)
         if not conference:
             return ErrorResponseModel(
                 detail="Conference not found",
                 status_code=404
             )
-        return ConferenceModel.model_validate(conference, by_alias=True)
+        return ConferenceOutputModel.model_validate(conference)
     except Exception as e:
         print(f"Error: {e}")
         return ErrorResponseModel(

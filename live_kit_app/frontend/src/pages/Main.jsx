@@ -50,7 +50,7 @@ export default function Main() {
 
   if (data) {
     if (data.status == "success") {
-        return <Conference conference={data.detail.conference} participant={data.detail.participant}/>
+        return <Conference conference={data.detail.conference} participant={data.detail.participant} role={data.detail.role}/>
     } if (data.status == "denied") {
         return <UserNotAtRoom/>
     } if (data.status == "expired") {

@@ -3,7 +3,7 @@ from live_kit_app.config import LIVEKIT_API_KEY, LIVEKIT_API_SECRET
 
 
 
-def get_token(name: str, room: str, is_speaker: bool):
+def get_token(user_id: int, name: str, room: str, is_speaker: bool):
     """
     Generate token with grants for conference room
     """
@@ -17,13 +17,12 @@ def get_token(name: str, room: str, is_speaker: bool):
         api_key=LIVEKIT_API_KEY,
         api_secret=LIVEKIT_API_SECRET
     ).with_identity(
-        "identity"
+        str(user_id)
         ).with_name(
         name=name
         ).with_grants(
             api.VideoGrants(
-                room_join=True,
-                room=room,
+                **default_grants
             )
         )
     return token.to_jwt()
