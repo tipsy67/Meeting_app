@@ -3,11 +3,14 @@ Main module for LiveKit App
 """
 from datetime import datetime, timezone
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Header, status, HTTPException
 from fastapi.responses import JSONResponse
-from live_kit_app.livekit_utils.token import get_token
 from fastapi.middleware.cors import CORSMiddleware
+from livekit.api import WebhookEvent
+from live_kit_app.livekit_utils.token import get_token
+from live_kit_app.schemas import TelegramMessage
 from live_kit_app.config import ALLOW_ORIGINS, API_API_URL
+from live_kit_app.livekit_utils.webhooks import webhook_receiver
 
 app = FastAPI()
 
@@ -70,7 +73,7 @@ async def check_conference(conference_id: str, participant_id: str): # -> Conf |
                     )
                 if speaker.get("id") == participant_id:
                     speaker_id = speaker.get("user_id")
-                    speaker_response = await client.get(f"{API_API_URL}/conferences/get_user_detail/{speaker_id}")
+                    speaker_response = await client.get(f"{API_API_URL}/users?tg_user_id={speaker_id}")
                     if speaker_response.status_code == 200:
                         return {
                             "status": "success",
@@ -101,7 +104,7 @@ async def check_conference(conference_id: str, participant_id: str): # -> Conf |
                                     }
                                 }
                             user_id = is_participant_exist[0]["user_id"]
-                            user_response = await client.get(f"{API_API_URL}/conferences/get_user_detail/{user_id}")
+                            user_response = await client.get(f"{API_API_URL}/users?tg_user_id={user_id}")
                             if user_response.status_code == 200:
                                 return {
                                     "status": "success",
@@ -152,4 +155,39 @@ async def is_moderator_ready(conference_id: str):
 
 
 
-#TODO: send chat message to tg
+#send chat message to tg
+@app.post("/send_message_to_tg")
+async def send_message_to_tg(message: TelegramMessage):
+    """
+    Send message from LiveKit chat to telegram chat
+    *TODO: use background task
+    """
+    # imitation request
+    return message
+
+
+
+#TODO: add webhook input with livekit events
+@app.post("/livekit_webhooks")
+async def livekit_webhooks(
+    request: Request,
+    authorization: str = Header(..., alias="Authorization")
+    ):
+    """
+    Webhook for LiveKit
+    """
+    raw_body = await request.body()
+    # 1. валидация подписи + парсинг
+    try:
+        event = webhook_receiver.receive(
+            body=str(raw_body.decode()),
+            auth_token=authorization,
+        )
+        print(event)
+    except Exception as e:
+        # подпись неверна или токен неподписан LiveKit‑секретом
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e)
+        )
+    return {"received": True}
