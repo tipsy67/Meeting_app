@@ -5,44 +5,44 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - .tg_app/web/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - .tg_app/web/html:/usr/share/nginx/html
+      - ./tg_app/web/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./tg_app/web/html:/usr/share/nginx/html
 #    restart: always
 #    restart: always
 
-  redis:
-    image: redis:latest
-    restart: on-failure
-    ports:
-      - "6379:6379"
-#    expose:
-#      - "6379"
-
-  celery:
-    build: .
-    depends_on:
-      - redis
-    restart: on-failure
-    env_file:
-      - .env
-    volumes:
-      - ./tg_app.bot:/app
-    command: celery -A worker.celery_app worker -l info
-
-  flower:
-    build: .
-    ports:
-      - "${FLOWER_PORT}:${FLOWER_PORT}"
-    volumes:
-      - ./tg_app.bot:/app
-    env_file:
-      - .env
-    depends_on:
-      - celery
-      - redis
-    command: >
-      celery -A worker.celery_app 
-      --broker=${FLOWER_BROKER_URL}
-      flower
-      --port=${FLOWER_PORT}
-      --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
+#  redis:
+#    image: redis:latest
+#    restart: on-failure
+#    ports:
+#      - "6379:6379"
+##    expose:
+##      - "6379"
+#
+#  celery:
+#    build: .
+#    depends_on:
+#      - redis
+#    restart: on-failure
+#    env_file:
+#      - .env
+#    volumes:
+#      - ./tg_app.bot:/app
+#    command: celery -A worker.celery_app worker -l info
+#
+#  flower:
+#    build: .
+#    ports:
+#      - "${FLOWER_PORT}:${FLOWER_PORT}"
+#    volumes:
+#      - ./tg_app.bot:/app
+#    env_file:
+#      - .env
+#    depends_on:
+#      - celery
+#      - redis
+#    command: >
+#      celery -A worker.celery_app
+#      --broker=${FLOWER_BROKER_URL}
+#      flower
+#      --port=${FLOWER_PORT}
+#      --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}

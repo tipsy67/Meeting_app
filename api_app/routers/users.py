@@ -3,13 +3,18 @@ from fastapi import APIRouter
 from starlette import status
 
 from api_app.datebases import users_requests as db
-from api_app.schemas.users import SpeakerListener, UserCreateUpdate, LectureRequest
+from api_app.schemas.users import SpeakerListener, UserCreateUpdate, LectureRequest, UserResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+@router.get('', status_code=status.HTTP_200_OK)
+async def get_user_rt(tg_user_id: int) -> UserResponse:
+    return await db.get_user(tg_user_id)
+
+
 @router.post('', status_code=status.HTTP_200_OK)
-async def set_user_rt(tg_user: UserCreateUpdate):
+async def set_user_rt(tg_user: UserCreateUpdate) -> UserResponse:
     return await db.set_user(tg_user)
 
 
