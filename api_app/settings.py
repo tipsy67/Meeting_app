@@ -65,7 +65,7 @@ class Settings(BaseSettings):
         env_file='.env.dan',
         case_sensitive=False,
         env_nested_delimiter='__',
-        extra='allow')
+        extra='ignore')
     conference: ConferenceSettings = ConferenceSettings()
 
 
