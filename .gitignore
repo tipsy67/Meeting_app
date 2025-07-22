@@ -789,3 +789,14 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos
 
+# Jitsi app
+templates_test/
+
+# Google Services
+credentials/
+json_reference/
+credentials.json
+secret_file.json
+
+# VSCode
+.vscode/
