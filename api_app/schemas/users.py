@@ -13,7 +13,7 @@ class UserCreateUpdate(BaseModel):
 
 
 class UserResponse(UserCreateUpdate):
-    id: int = Field(alias="_id")
+    id: int = Field(alias="_id", serialization_alias="id")
     created_at: datetime
     last_activity: datetime
     is_active: bool
