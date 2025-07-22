@@ -3,7 +3,8 @@ Main module for LiveKit App
 """
 from datetime import datetime, timezone
 import httpx
-from fastapi import FastAPI, Request, Header, status, HTTPException
+from pydantic import ValidationError
+from fastapi import FastAPI, Request, Header, status, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from livekit.api import WebhookEvent
@@ -11,6 +12,7 @@ from live_kit_app.livekit_utils.token import get_token
 from live_kit_app.schemas import TelegramMessage
 from live_kit_app.config import ALLOW_ORIGINS, API_API_URL
 from live_kit_app.livekit_utils.webhooks import webhook_receiver
+from live_kit_app.telegram_utils import send_message_to_listeners
 
 app = FastAPI()
 
@@ -157,14 +159,28 @@ async def is_moderator_ready(conference_id: str):
 
 #send chat message to tg
 @app.post("/send_message_to_tg")
-async def send_message_to_tg(message: TelegramMessage):
+async def send_message_to_tg(message: TelegramMessage, background_task: BackgroundTasks):
     """
     Send message from LiveKit chat to telegram chat
-    *TODO: use background task
     """
-    # imitation request
-    return message
-
+    try:
+        print("Получено:", message)  # Лог для отладки
+        background_task.add_task(
+            send_message_to_listeners, 
+            conference_id = message.conference_id, 
+            message = message.text,
+            name=message.name
+            )
+        return {"status": "success", "data": message}
+    except ValidationError as ve:
+        print("Ошибка валидации:", ve)
+        raise  # FastAPI сам вернёт 422
+    except Exception as e:
+        print("Ошибка:", e)
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        ) 
 
 
 #TODO: add webhook input with livekit events

@@ -1,17 +1,19 @@
 
 
-export default function sendTelegramMessage(chatId, message) {
+export default function sendTelegramMessage(conference_id, message, name) {
     const url = `${import.meta.env.VITE_BACKEND_URL}/send_message_to_tg`;
     const messageData = {
-        "chat_id": chatId,
-        "text": message
+        "conference_id": conference_id,
+        "text": message,
+        "name": name
     }
+    console.log("VALIDATION", JSON.stringify(messageData))
     fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: messageData
+        body: JSON.stringify(messageData)
         })
         .then(response => {
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);

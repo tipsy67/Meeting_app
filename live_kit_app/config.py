@@ -14,3 +14,5 @@ LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS").split(' ')
 
 API_API_URL=os.getenv("API_API_URL")
+
+TG_TOKEN = os.getenv("TG_TOKEN")

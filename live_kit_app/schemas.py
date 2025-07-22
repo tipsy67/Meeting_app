@@ -8,5 +8,6 @@ class TelegramMessage(BaseModel):
     """
     Model for object which used for sending message to Telegram
     """
-    chat_id: int
+    conference_id: str
     text: str
+    name: str | None = None

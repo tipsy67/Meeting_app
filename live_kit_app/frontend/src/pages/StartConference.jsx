@@ -1,14 +1,26 @@
-import { useRoomContext, VideoConference} from "@livekit/components-react";
+import { useDataChannel, useChat, useRoomContext, VideoConference} from "@livekit/components-react";
 import { RoomEvent } from "livekit-client";
 import { WaitingModerator } from "./WaitingModerator";
 import { useEffect, useState } from "react";
+import sendTelegramMessage from "../assets/js/sendMessageToTelegram";
 
 export const StartConference = () => {
+  const conferenceId = JSON.parse(localStorage.getItem("conference")).id;
   const speakerId = JSON.parse(localStorage.getItem("conference")).speaker.user_id;
   const role = JSON.parse(localStorage.getItem("role"));
   const [speakerJoined, setSpeakerJoined] = useState(false);
 
   const room = useRoomContext();
+
+  // if localUser is Speaker -> send message to telegram (useDataChannel - latestMessage)
+  const { chatMessages, send, isSending } = useChat()
+
+  useEffect(() => {
+    if (chatMessages.length > 0 && role !== "listener") {
+      const data = chatMessages[chatMessages.length - 1]
+      sendTelegramMessage(conferenceId, data.message, data.from?.name)
+    }
+  })
 
   const checkIfSpeakerPresent = () => {
     return Array.from(room.remoteParticipants).some(
@@ -16,7 +28,6 @@ export const StartConference = () => {
     )
   };
 
-  
   useEffect(() => {
     if (role !== "listener") {
       setSpeakerJoined(true);
