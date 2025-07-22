@@ -2,7 +2,12 @@
 Settings for the API application.
 """
 import os
+from enum import Enum
+
+
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
@@ -22,3 +27,43 @@ GOOGLE_MEET_BACKEND = {
 LIVEKIT_BACKEND = {
     "host": os.getenv("JITSI_HOST", "https://localhost:5173"),
 }
+
+class ConferenceBackends(str, Enum):
+    LIVEKIT = "livekit"
+    JITSI = "jitsi"
+    GOOGLE_MEET = "google_meet"
+
+class LiveKitSettings(BaseModel):
+    host: str = "https://localhost:5173"
+
+class GoogleMeetSettings(BaseModel):
+    host: str = "https://meet.google.com"
+    credential_dir: str = "google_meet_credentials.json"
+
+class JitsiSettings(BaseModel):
+    host: str = "https://meet.jit.si"
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file='.env.dan',
+        case_sensitive=False,
+        env_nested_delimiter='__',
+        extra='allow')
+    conference_backend_default: ConferenceBackends = ConferenceBackends.LIVEKIT
+    livekit: LiveKitSettings = LiveKitSettings()
+    google_meet: GoogleMeetSettings = GoogleMeetSettings()
+    jitsi: JitsiSettings = JitsiSettings()
+
+    @property
+    def backend(self) -> LiveKitSettings|GoogleMeetSettings|JitsiSettings|None:
+        if self.conference_backend_default == ConferenceBackends.LIVEKIT:
+            return self.livekit
+        elif self.conference_backend_default == ConferenceBackends.GOOGLE_MEET:
+            return self.google_meet
+        elif self.conference_backend_default == ConferenceBackends.JITSI:
+            return self.jitsi
+
+settings = Settings()
+print(settings.model_dump())
+print(settings.backend)
