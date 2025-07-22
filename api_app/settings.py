@@ -44,26 +44,31 @@ class JitsiSettings(BaseModel):
     host: str = "https://meet.jit.si"
 
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file='.env.dan',
-        case_sensitive=False,
-        env_nested_delimiter='__',
-        extra='allow')
-    conference_backend_default: ConferenceBackends = ConferenceBackends.LIVEKIT
+class ConferenceSettings(BaseModel):
+    backend_default: ConferenceBackends = ConferenceBackends.LIVEKIT
     livekit: LiveKitSettings = LiveKitSettings()
     google_meet: GoogleMeetSettings = GoogleMeetSettings()
     jitsi: JitsiSettings = JitsiSettings()
 
     @property
     def backend(self) -> LiveKitSettings|GoogleMeetSettings|JitsiSettings|None:
-        if self.conference_backend_default == ConferenceBackends.LIVEKIT:
+        if self.backend_default == ConferenceBackends.LIVEKIT:
             return self.livekit
-        elif self.conference_backend_default == ConferenceBackends.GOOGLE_MEET:
+        elif self.backend_default == ConferenceBackends.GOOGLE_MEET:
             return self.google_meet
-        elif self.conference_backend_default == ConferenceBackends.JITSI:
+        elif self.backend_default == ConferenceBackends.JITSI:
             return self.jitsi
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file='.env.dan',
+        case_sensitive=False,
+        env_nested_delimiter='__',
+        extra='allow')
+    conference: ConferenceSettings = ConferenceSettings()
+
 
 settings = Settings()
 print(settings.model_dump())
-print(settings.backend)
+print(settings.conference.backend)
