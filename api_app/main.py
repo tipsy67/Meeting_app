@@ -1,10 +1,27 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
 
+from api_app.core.taskiq_broker import broker
 from api_app.routers import users, lectures
-from api_app.schemas.users import SpeakerListener
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    # startup
+    if not broker.is_worker_process:
+        await broker.startup()
+
+    yield
+    # shutdown
+    if not broker.is_worker_process:
+        await broker.shutdown()
+
+api_main_app = FastAPI(
+    default_response_class=ORJSONResponse,
+)
 
 origins = [
     "http://localhost",
@@ -15,7 +32,7 @@ origins = [
 ]
 
 # Настройка CORS
-app.add_middleware(
+api_main_app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
@@ -25,10 +42,10 @@ app.add_middleware(
 )
 
 
-@app.get('/')
+@api_main_app.get('/')
 async def root():
     return {'message': 'Hello!'}
 
 
-app.include_router(users.router)
-app.include_router(lectures.router)
+api_main_app.include_router(users.router)
+api_main_app.include_router(lectures.router)

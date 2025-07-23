@@ -8,7 +8,7 @@ from api_app.schemas.users import SpeakerListener, UserCreateUpdate, LectureRequ
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get('', status_code=status.HTTP_200_OK)
+@router.get('', status_code=status.HTTP_200_OK, response_model=UserResponse)
 async def get_user_rt(tg_user_id: int) -> UserResponse:
     return await db.get_user(tg_user_id)
 
