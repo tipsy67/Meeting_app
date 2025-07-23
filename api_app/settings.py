@@ -51,7 +51,7 @@ class ConferenceSettings(BaseModel):
     jitsi: JitsiSettings = JitsiSettings()
 
     @property
-    def backend(self) -> LiveKitSettings|GoogleMeetSettings|JitsiSettings|None:
+    def backend(self) -> LiveKitSettings|GoogleMeetSettings|JitsiSettings:
         if self.backend_default == ConferenceBackends.LIVEKIT:
             return self.livekit
         elif self.backend_default == ConferenceBackends.GOOGLE_MEET:
