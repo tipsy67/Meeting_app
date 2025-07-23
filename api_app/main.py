@@ -6,7 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
 from api_app.core.taskiq_broker import broker
-from api_app.routers import users, lectures
+from api_app.routers import users, lectures, conference
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -49,3 +50,5 @@ async def root():
 
 api_main_app.include_router(users.router)
 api_main_app.include_router(lectures.router)
+api_main_app.include_router(conference.router)
+
