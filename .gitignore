@@ -707,6 +707,9 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+**/.env
+**/.env.local
+**/.env.prod
 .env
 .venv
 env/
@@ -799,4 +802,5 @@ credentials.json
 secret_file.json
 
 # VSCode
-.vscode/
+.vscode/!/api_app/.env
+!/api_app/.env
