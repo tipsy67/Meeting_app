@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 api_main_app = FastAPI(
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 
 origins = [
@@ -29,7 +30,7 @@ origins = [
     "http://localhost:8000",
     "http://127.0.0.1",
     "http://127.0.0.1:8000",
-    "https://kqghnn-37-44-40-134.ru.tuna.am"
+    "https://ag6dqb-37-44-40-134.ru.tuna.am"
 ]
 
 # Настройка CORS

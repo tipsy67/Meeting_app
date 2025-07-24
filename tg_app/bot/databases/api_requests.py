@@ -1,10 +1,9 @@
-import os
+
 from functools import wraps
-from typing import Callable, Optional
+from typing import Callable
 
 import httpx
-from aiogram.types import CallbackQuery
-from dotenv import load_dotenv
+
 
 
 class APIPath:

@@ -4,9 +4,14 @@ from starlette import status
 
 from api_app.datebases import users_requests as db
 from api_app.schemas.users import SpeakerListener, UserCreateUpdate, LectureRequest, UserResponse
+from api_app.tasks.tg_messages import print_task
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+@router.get("/test")
+async def test():
+    await print_task.kiq()
+    return {"status": "ok"}
 
 @router.get('', status_code=status.HTTP_200_OK, response_model=UserResponse)
 async def get_user_rt(tg_user_id: int) -> UserResponse:

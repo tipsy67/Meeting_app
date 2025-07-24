@@ -41,7 +41,7 @@ class ConferenceSettings(BaseModel):
 
 class RabbitMQSettings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=('../../.env',),
+        env_file=('.env',),
         case_sensitive=False,
         env_nested_delimiter='__',
         extra='ignore')
@@ -53,17 +53,22 @@ class RabbitMQSettings(BaseSettings):
     def url(self):
         return f"amqp://{self.user}:{self.password}@{self.host}:5672"
 
+class TGSettings(BaseModel):
+    token: str = ''
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=('../.env', '../.env.dan'),
+        env_file=('api_app/.env', 'api_app/.env.dan'),#todo: убрать прямой путь и сделать относительный путь
         case_sensitive=False,
         env_nested_delimiter='__',
         extra='ignore')
     conference: ConferenceSettings = ConferenceSettings()
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
+    tg: TGSettings = TGSettings()
+
 
 
 
 settings = Settings()
-# print(settings.model_dump())
+print(settings.model_dump())
+# print(settings.rabbitmq.url)

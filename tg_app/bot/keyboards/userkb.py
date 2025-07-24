@@ -26,7 +26,7 @@ def get_web_app():
         inline_keyboard=[
             [InlineKeyboardButton(
                 text="Открыть WebApp",
-                web_app=WebAppInfo(url="https://p1gcrh-37-44-40-134.ru.tuna.am/index.html")
+                web_app=WebAppInfo(url="https://ag6dqb-37-44-40-134.ru.tuna.am/index.html")
             )]
         ]
     )

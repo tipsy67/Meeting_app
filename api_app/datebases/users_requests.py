@@ -8,6 +8,7 @@ from starlette import status
 
 from api_app.datebases import config_base as db
 from api_app.schemas.users import SpeakerListenerResponse, UserCreateUpdate, UserResponse
+from api_app.service.send_tg_messages import send_messages_for_users
 
 
 async def get_user(tg_user_id: int) -> UserResponse:
@@ -102,7 +103,7 @@ async def add_listener_to_speaker(data):
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )
-
+    await send_messages_for_users([data.speaker_id], f"you are liked by {data.listener_id}")
     return SpeakerListenerResponse(**link)
 
 

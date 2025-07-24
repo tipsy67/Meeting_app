@@ -9,4 +9,4 @@ broker = AioPikaBroker(
     url=settings.rabbitmq.url
 )
 
-taskiq_fastapi.init(broker, "main:api_main_app")
+taskiq_fastapi.init(broker, "api_app.main:api_main_app")
