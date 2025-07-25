@@ -21,7 +21,7 @@ async def get_all_lecture_rt(speaker_id: int):
 
 @router.delete("", status_code=status.HTTP_200_OK)
 async def delete_lecture_rt(speaker_id: int, name: str):
-    return await db.delete_lecture(speaker_id, name)
+    return await srv.delete_lecture(speaker_id, name)
 
 
 @router.get("/listeners", status_code=status.HTTP_200_OK)
