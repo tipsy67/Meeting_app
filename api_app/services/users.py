@@ -53,3 +53,19 @@ async def save_lecture(data):
                  f" исключил вас из лекции {lecture_name}")
 
     return response
+
+async def delete_lecture(speaker_id: int, lecture_name: str):
+    speaker:UserResponse = await get_user(speaker_id)
+    old_lecture:dict = await get_listeners_ids_from_lecture(speaker_id, lecture_name)
+
+    removed_listeners = old_lecture.get("listeners")
+
+    response = await db.delete_lecture(speaker_id, lecture_name)
+
+    if removed_listeners :
+        await send_messages_to_users_task.kiq(
+            recipients_ids=removed_listeners,
+            text=f"{speaker.first_name} {speaker.last_name} ({speaker.username})"
+                 f" удалил лекцию {lecture_name}")
+
+    return response
