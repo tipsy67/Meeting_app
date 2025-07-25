@@ -11,7 +11,7 @@ router = APIRouter(prefix="/lectures", tags=["lectures"])
 # Все лекции привязаны к одному спикеру, слушатели как список
 @router.post("", status_code=status.HTTP_200_OK)
 async def save_lecture_rt(data: LectureRequest):
-    return await db.save_lecture(data)
+    return await db_with_tasks.save_lecture(data)
 
 
 @router.get("", status_code=status.HTTP_200_OK)

@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Iterable
+
 from fastapi import HTTPException
 
 
@@ -23,6 +25,13 @@ async def get_user(tg_user_id: int) -> UserResponse:
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail=f"User {tg_user_id} not found"
     )
+
+
+async def get_users(recipients_ids: Iterable[int]) -> list[UserResponse]:
+    id_list = list(recipients_ids)
+    cursor = db.users_collection.find({"_id": {"$in": id_list}})
+
+    return [UserResponse(**user) async for user in cursor]
 
 
 async def set_user(tg_user: UserCreateUpdate) -> UserResponse:
@@ -124,27 +133,6 @@ async def get_listeners(speaker_id: int):
     return {"listeners": listeners}
 
 
-async def save_lecture(data):
-    speaker_id, lecture_name = data.name.split("_")
-    speaker_id = int(speaker_id)
-    now = datetime.now()
-    lecture = await db.lecture_collection.find_one_and_update(
-        {"speaker_id": speaker_id, "lecture_name": lecture_name},
-        {
-            "$set": {
-                "speaker_id": speaker_id,
-                "lecture_name": lecture_name,
-                "listeners": data.data,
-                "updated_at": now,
-            },
-        },
-        projection={"_id": False},
-        upsert=True,
-        return_document=ReturnDocument.AFTER,
-    )
-    return lecture
-
-
 async def get_all_lectures(speaker_id: int):
     pipeline = [
         {"$match": {"speaker_id": speaker_id}},
@@ -162,8 +150,15 @@ async def get_all_lectures(speaker_id: int):
 
     return {"lectures": lectures}
 
+async def get_listeners_ids_from_lecture(speaker_id: int, name: str)->dict:
+    lecture = await db.lecture_collection.find_one(
+        {"speaker_id": speaker_id, "lecture_name": name},
+        {"listeners": 1}
+    )
+    return {"listeners": lecture.get("listeners", []) if lecture else []}
 
-async def get_listeners_from_lecture(speaker_id: int, name: str):
+
+async def get_listeners_from_lecture(speaker_id: int, name: str)->dict:
     pipeline = [
         {"$match": {"speaker_id": speaker_id, "lecture_name": name}},
         {"$unwind": "$listeners"},

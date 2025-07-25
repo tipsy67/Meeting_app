@@ -1,10 +1,11 @@
 import logging
+from typing import Iterable
 
 from api_app.core.taskiq_broker import broker
 from aiogram import Bot
 from api_app.core.config import settings
 from api_app.schemas.users import UserResponse
-from api_app.datebases.users_requests import get_user
+from api_app.datebases.users_requests import get_user, get_users
 
 logger = logging.getLogger("taskiq")
 logger.setLevel(logging.INFO)
@@ -28,9 +29,12 @@ async def send_message_to_speaker_task(
 
 
 @broker.task
-async def send_messages_to_users_task(user_ids: list[int], text: str) -> None:
-    for user_id in user_ids:
-        pass
+async def send_messages_to_users_task(recipients_ids: Iterable[int], text: str) -> None:
+    async with Bot(token=settings.tg.token) as bot:
+        recipients=await get_users(recipients_ids)
+        for recipient in recipients:
+            full_message = f"Внимание, {recipient.first_name}! {text.capitalize()}"
+            await bot.send_message(recipient.id, full_message)
 
 
 @broker.task
