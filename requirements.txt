@@ -1,9 +1,6 @@
-python
 fastapi
 dotenv
 aiogram
-sqlalchemy
-aiosqlite
 pymongo
 fluent-runtime
 httpx
@@ -16,3 +13,5 @@ pydantic-settings
 taskiq-aio-pika
 taskiq-fastapi
 google-auth-oauthlib
+livekit-api
+google-api-python-client

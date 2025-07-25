@@ -41,7 +41,7 @@ async def send_messages_to_users_task(recipients_ids: Iterable[int], text: str) 
 
 
 @broker.task
-async def send_individual_message_to_users_task(recipients: Iterable[int, str]) -> None:
+async def send_individual_message_to_users_task(recipients) -> None:
     async with Bot(token=settings.tg.token) as bot:
         # recipients=await get_users(recipients_ids)
         for recipient in recipients:

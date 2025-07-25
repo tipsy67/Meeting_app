@@ -54,6 +54,7 @@ class RabbitMQSettings(BaseSettings):
     password: str = Field("guest", alias="RABBITMQ_PASSWORD")
     host: str = Field("localhost", alias="RABBITMQ_HOST")
 
+
     @property
     def url(self):
         return f"amqp://{self.user}:{self.password}@{self.host}:5672"
@@ -68,6 +69,7 @@ class Settings(BaseSettings):
         env_file=(
             "api_app/.env",
             "api_app/.env.dan",
+            # "api_app/.env.production",
         ),  # todo: убрать прямой путь и сделать относительный путь
         case_sensitive=False,
         env_nested_delimiter="__",

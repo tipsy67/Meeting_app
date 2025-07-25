@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from starlette import status
 
-from api_app.datebases import users_requests as db
-from api_app.datebases import users_requests_with_tasks as db_with_tasks
+from api_app.datebases import users_requests as db # напрямую через функции работающие с БД
+from api_app.services import users as srv # через сервисную прослойку для создания отложенных задач
+
 from api_app.schemas.users import (
     SpeakerListener,
     UserCreateUpdate,
@@ -37,7 +38,7 @@ async def get_all_speakers_rt():
 
 @router.post("/speakers/listeners", status_code=status.HTTP_200_OK)
 async def add_listener_to_speaker_rt(data: SpeakerListener):
-    return await db_with_tasks.add_listener_to_speaker(data)
+    return await srv.add_listener_to_speaker(data)
 
 
 @router.get("/listeners", status_code=status.HTTP_200_OK)
@@ -52,4 +53,4 @@ async def get_speakers_for_listener_rt(listener_id: int):
 
 @router.delete("/listeners/speakers", status_code=status.HTTP_200_OK)
 async def remove_from_listeners_rt(listener_id: int, speaker_id: int):
-    return await db_with_tasks.delete_listener_from_speaker(listener_id, speaker_id)
+    return await srv.delete_listener_from_speaker(listener_id, speaker_id)
