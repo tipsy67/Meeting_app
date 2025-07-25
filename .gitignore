@@ -295,7 +295,17 @@ PublishScripts/
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
-#!**/[Pp]ackages/repositories.config
+#!**/[Pp]ackages/repositories.c# Jitsi app
+templates_test/
+
+# Google Services
+credentials/
+json_reference/
+credentials.json
+secret_file.json
+
+# VSCode
+.vscode/onfig
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets
@@ -691,16 +701,9 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos
 
-# Jitsi app
-templates_test/
-
-# Google Services
-credentials/
-json_reference/
-credentials.json
-secret_file.json
 
 # VSCode
 .vscode/
 
 my_questions
+
