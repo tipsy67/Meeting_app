@@ -216,7 +216,6 @@ const ListenerManager = {
         });
         if (result) {
             tg.showAlert('Вы успешно отписались от лектора!');
-            tg.showAlert(JSON.stringify(result.message));
             Navigation.show('listenerMenu');
         }
     }

@@ -3,7 +3,7 @@ from datetime import datetime
 from pymongo import ReturnDocument
 
 from api_app.datebases import config_base as db
-from api_app.datebases.users_requests import get_listeners_from_lecture, get_user, get_listeners_ids_from_lecture
+from api_app.datebases.users_requests import get_user, get_listeners_ids_from_lecture
 from api_app.schemas.users import (
     SpeakerListenerResponse, UserResponse,
 )
@@ -53,8 +53,7 @@ async def save_lecture(data):
     added_listeners = set(data.data)
     removed_listeners = set()
     prev_listeners = old_lecture.get("listeners")
-    print(type(prev_listeners))
-    print(prev_listeners)
+
     if prev_listeners is not None and len(prev_listeners)>0:
         added_listeners = added_listeners - set(prev_listeners)
         removed_listeners = set(prev_listeners) - set(data.data)
@@ -74,8 +73,6 @@ async def save_lecture(data):
         return_document=ReturnDocument.AFTER,
     )
 
-    print(added_listeners)
-    print(removed_listeners)
     if added_listeners :
         await send_messages_to_users_task.kiq(
             recipients_ids=added_listeners,
