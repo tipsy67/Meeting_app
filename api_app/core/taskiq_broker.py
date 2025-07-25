@@ -5,8 +5,6 @@ from taskiq_aio_pika import AioPikaBroker
 
 from api_app.core.config import settings
 
-broker = AioPikaBroker(
-    url=settings.rabbitmq.url
-)
+broker = AioPikaBroker(url=settings.rabbitmq.url)
 
 taskiq_fastapi.init(broker, "api_app.main:api_main_app")

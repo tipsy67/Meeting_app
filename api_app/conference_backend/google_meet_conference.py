@@ -1,13 +1,20 @@
 """
 Module for managing Google Meet conference operations.
 """
-from api_app.schemas.conferences import ConferenceCreateModel, ConferenceModel, ConferenceOutputModel, ConferenceParticipant
+
+from api_app.schemas.conferences import (
+    ConferenceCreateModel,
+    ConferenceModel,
+    ConferenceOutputModel,
+    ConferenceParticipant,
+)
 from api_app.schemas.errors import ErrorResponseModel
 from google_services.calendar_api_utils import create_event
 
 
-
-async def create_goole_meet_conference(conference: ConferenceCreateModel) -> ConferenceOutputModel | ErrorResponseModel:
+async def create_goole_meet_conference(
+    conference: ConferenceCreateModel,
+) -> ConferenceOutputModel | ErrorResponseModel:
     """
     Create a Jitsi conference.
     """
@@ -17,10 +24,9 @@ async def create_goole_meet_conference(conference: ConferenceCreateModel) -> Con
         end_time=conference.end_datetime.isoformat(),
     )
     if not event:
-            return ErrorResponseModel(
-                status_code=500,
-                detail="Failed to create Google Meet event"
-            )
+        return ErrorResponseModel(
+            status_code=500, detail="Failed to create Google Meet event"
+        )
     conference_db = ConferenceModel(
         id=conference.id,
         speaker_id=conference.speaker_id,
@@ -29,7 +35,7 @@ async def create_goole_meet_conference(conference: ConferenceCreateModel) -> Con
         end_datetime=conference.end_datetime,
         conference_link=event,
         recording=conference.recording,
-        is_ended=conference.is_ended
+        is_ended=conference.is_ended,
     )
     if isinstance(conference_db, ErrorResponseModel):
         return conference_db
