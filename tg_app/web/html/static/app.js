@@ -15,7 +15,7 @@ const initTelegramWebApp = () => {
 
 // Конфигурация API
 const API_CONFIG = {
-    BASE_URL: 'https://s9piop-37-44-40-134.ru.tuna.am',
+    BASE_URL: 'https://z9uiyj-37-44-40-134.ru.tuna.am',
     ENDPOINTS: {
         set_user: '/users',
         get_speakers: '/users/speakers',
@@ -216,7 +216,6 @@ const ListenerManager = {
         });
         if (result) {
             tg.showAlert('Вы успешно отписались от лектора!');
-            tg.showAlert(JSON.stringify(result.message));
             Navigation.show('listenerMenu');
         }
     }

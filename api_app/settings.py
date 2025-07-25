@@ -1,6 +1,7 @@
 """
 Settings for the API application.
 """
+
 import os
 from enum import Enum
 
@@ -13,7 +14,7 @@ load_dotenv()
 
 # Backend for conference management
 
-CONFERENCE_BACKEND = "livekit" # jitsi | google_meet | livekit
+CONFERENCE_BACKEND = "livekit"  # jitsi | google_meet | livekit
 
 JITSI_BACKEND = {
     "host": os.getenv("JITSI_HOST", "https://meet.jit.si"),
@@ -21,7 +22,9 @@ JITSI_BACKEND = {
 
 GOOGLE_MEET_BACKEND = {
     "host": os.getenv("GOOGLE_MEET_HOST", "https://meet.google.com"),
-    "credential_dir": os.getenv("GOOGLE_MEET_CREDENTIAL_PATH", "google_meet_credentials.json"),
+    "credential_dir": os.getenv(
+        "GOOGLE_MEET_CREDENTIAL_PATH", "google_meet_credentials.json"
+    ),
 }
 
 LIVEKIT_BACKEND = {

@@ -4,7 +4,6 @@ import os
 from aiogram import Bot, Dispatcher, F, types
 from dotenv import load_dotenv
 
-from tg_app.bot.databases.sql_models import async_main
 from tg_app.bot.middlewares.language import FluentL10nMiddleware
 
 load_dotenv()
@@ -24,8 +23,7 @@ async def main():
 
 
 async def startup():
-    await async_main()
-
+    pass
 
 if __name__ == '__main__':
     print('Bot starting...')
