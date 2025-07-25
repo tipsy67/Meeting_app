@@ -10,7 +10,7 @@ from starlette import status
 from api_app.datebases import config_base as db
 from api_app.schemas.users import (
     UserCreateUpdate,
-    UserResponse,
+    UserResponse, SpeakerListenerResponse,
 )
 
 
@@ -132,6 +132,30 @@ async def get_listeners(speaker_id: int):
 
     return {"listeners": listeners}
 
+async def add_listener_to_speaker(data):
+    now = datetime.now()
+    link = await db.speaker_listener_collection.find_one_and_update(
+        {"speaker_id": data.speaker_id, "listener_id": data.listener_id},
+        {
+            "$setOnInsert": {
+                "speaker_id": data.speaker_id,
+                "listener_id": data.listener_id,
+                "created_at": now,
+            }
+        },
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+
+    return SpeakerListenerResponse(**link)
+
+async def delete_listener_from_speaker(listener_id: int, speaker_id: int):
+    result = await db.speaker_listener_collection.find_one_and_delete(
+        {"speaker_id": speaker_id, "listener_id": listener_id},
+        projection={"_id": False},
+    )
+
+    return {"deleted": result}
 
 async def get_all_lectures(speaker_id: int):
     pipeline = [
@@ -204,3 +228,26 @@ async def remove_listener_from_all_lectures(listener_id: int, speaker_id: int):
     )
 
     return {"matched": result.matched_count, "modified": result.modified_count}
+
+
+async def save_lecture(data):
+    speaker_id, lecture_name = data.name.split("_")
+    speaker_id = int(speaker_id)
+    now = datetime.now()
+
+    lecture = await db.lecture_collection.find_one_and_update(
+        {"speaker_id": speaker_id, "lecture_name": lecture_name},
+        {
+            "$set": {
+                "speaker_id": speaker_id,
+                "lecture_name": lecture_name,
+                "listeners": data.data,
+                "updated_at": now,
+            },
+        },
+        projection={"_id": False},
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+
+    return lecture
