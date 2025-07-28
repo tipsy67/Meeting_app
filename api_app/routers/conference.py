@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from starlette import status
@@ -8,7 +10,7 @@ from api_app.schemas.conferences import ConferenceCreateModel
 from api_app.schemas.errors import ErrorResponseModel
 
 from api_app.settings import CONFERENCE_BACKEND
-
+import api_app.services.conferences as srv
 
 router = APIRouter(prefix="/conferences", tags=["conferences"])
 
@@ -18,7 +20,10 @@ async def create_conference_rt(conference: ConferenceCreateModel):
     """
     Create a new conference.
     """
+    conference.end_datetime = conference.start_datetime + datetime.timedelta(minutes=conference.duration)
     conference_output = await create_conference(CONFERENCE_BACKEND, conference)
+    await srv.create_conference(conference_output.id)
+
     return conference_output.model_dump()
 
 

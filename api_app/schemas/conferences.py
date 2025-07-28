@@ -18,9 +18,11 @@ class ConferenceCreateModel(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     speaker: int
-    listeners: list[int]
+    lecture_name: str
+    listeners: list[int] = list
     start_datetime: datetime
-    end_datetime: datetime
+    duration: int = 40
+    end_datetime: datetime = datetime.min
     recording: bool = False
     is_ended: bool = False
 
