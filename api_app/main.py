@@ -31,7 +31,7 @@ origins = [
     "http://localhost:8000",
     "http://127.0.0.1",
     "http://127.0.0.1:8000",
-    "https://ag6dqb-37-44-40-134.ru.tuna.am",
+    "https://2deyhh-37-44-40-134.ru.tuna.am",
 ]
 
 # Настройка CORS
