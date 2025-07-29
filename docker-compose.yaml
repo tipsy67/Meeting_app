@@ -10,19 +10,26 @@ services:
       - ./tg_app/web/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./tg_app/web/html:/usr/share/nginx/html
 
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    hostname: rabbitmq
-    container_name: rabbitmq
+  redis:
+    image: redis:latest
+    hostname: redis
+    container_name: redis
+    restart: on-failure
     ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
-      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+      - "6379:6379"
+
+#  rabbitmq:
+#    image: rabbitmq:3-management-alpine
+#    hostname: rabbitmq
+#    container_name: rabbitmq
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
+#    environment:
+#      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
+#      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
+#    volumes:
+#      - rabbitmq-data:/var/lib/rabbitmq
 
 
 volumes:

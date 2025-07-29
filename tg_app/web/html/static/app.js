@@ -15,7 +15,7 @@ const initTelegramWebApp = () => {
 
 // Конфигурация API
 const API_CONFIG = {
-    BASE_URL: 'https://z9uiyj-37-44-40-134.ru.tuna.am',
+    BASE_URL: 'https://7qvdq2-37-44-40-134.ru.tuna.am',
     ENDPOINTS: {
         set_user: '/users',
         get_speakers: '/users/speakers',
@@ -30,7 +30,8 @@ const API_CONFIG = {
         delete_lectures: '/lectures',
 
         get_listeners_from_lecture: '/lectures/listeners',
-        remove_from_all_lectures: '/lectures/listeners-unsubscribe'
+        remove_from_all_lectures: '/lectures/listeners-unsubscribe',
+        create_meeting: '/conferences/new'
     },
     getUrl(endpoint) {
         return `${this.BASE_URL}${this.ENDPOINTS[endpoint]}`;
@@ -79,7 +80,12 @@ const DOM = {
     deleteLectureBtn: document.getElementById('deleteLectureBtn'),
     backFromEditBtn: document.getElementById('backFromEditBtn'),
     editListenersBtn: document.getElementById('editListenersBtn'),
-
+    newMeetingBtn: document.getElementById('newMeetingBtn'),
+    newMeetingForm: document.getElementById('newMeetingForm'),
+    meetingDateTime: document.getElementById('meetingDateTime'),
+    confirmMeetingBtn: document.getElementById('confirmMeetingBtn'),
+    backFromMeetingFormBtn: document.getElementById('backFromMeetingFormBtn'),
+    currentMeetingLectureTitle: document.getElementById('currentMeetingLectureTitle')
 };
 
 // Сервис API
@@ -126,11 +132,9 @@ const ApiService = {
 const ListenerManager = {
     async fetchSpeakers() {
         try {
-            // Fetch both speakers and selected speakers in parallel
             const [speakersData, selectedSpeakersData] = await Promise.all([
                 ApiService.request('get_speakers'),
-                ApiService.request('get_selected_speakers',{
-                params: {listener_id: userId}})
+                ApiService.request('get_selected_speakers', {params: {listener_id: userId}})
             ]);
 
             if (!speakersData?.speakers) return;
@@ -139,27 +143,25 @@ const ListenerManager = {
 
             DOM.speakersList.innerHTML = speakersData.speakers.map(speaker => {
                 const isSelected = selectedSpeakerIds.includes(speaker._id);
-
                 return `
-                    <div class="list-group-item d-flex align-items-center">
-                        <div class="form-check flex-grow-1">
-                            <input class="form-check-input" type="radio" name="speaker" 
-                                  id="speaker-${speaker._id}" value="${speaker._id}"
-                                  ${isSelected ? 'disabled' : ''}>
-                            <label class="form-check-label ms-2" for="speaker-${speaker._id}" 
-                                  ${isSelected ? 'style="opacity: 0.5;"' : ''}>
-                                ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
-                                ${isSelected ? ' ✅' : ''}
-                            </label>
-                        </div>
-                    </div>
-                `;
+                            <div class="list-group-item d-flex align-items-center">
+                                <div class="form-check flex-grow-1">
+                                    <input class="form-check-input" type="radio" name="speaker" 
+                                          id="speaker-${speaker._id}" value="${speaker._id}"
+                                          ${isSelected ? 'disabled' : ''}>
+                                    <label class="form-check-label ms-2" for="speaker-${speaker._id}" 
+                                          ${isSelected ? 'style="opacity: 0.5;"' : ''}>
+                                        ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
+                                        ${isSelected ? ' ✅' : ''}
+                                    </label>
+                                </div>
+                            </div>
+                        `;
             }).join('');
         } catch (error) {
             console.error('Failed to fetch speakers:', error);
         }
     },
-
 
     async fetchMySpeakers() {
         try {
@@ -169,19 +171,19 @@ const ListenerManager = {
             if (!data?.speakers) return;
 
             DOM.speakersToLeaveList.innerHTML = data.speakers.map(speaker => `
-            <div class="list-group-item d-flex align-items-center">
-                <div class="form-check flex-grow-1">
-                    <input class="form-check-input" type="radio" 
-                           name="speaker" 
-                           id="speaker-${speaker._id}" 
-                           value="${speaker._id}">
-                    <label class="form-check-label ms-2" for="speaker-${speaker._id}">
-                        ${speaker.username || 'No username'} 
-                        (${speaker.full_name || 'No name'})
-                    </label>
-                </div>
-            </div>
-        `).join('');
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="form-check flex-grow-1">
+                                <input class="form-check-input" type="radio" 
+                                       name="speaker" 
+                                       id="speaker-${speaker._id}" 
+                                       value="${speaker._id}">
+                                <label class="form-check-label ms-2" for="speaker-${speaker._id}">
+                                    ${speaker.username || 'No username'} 
+                                    (${speaker.full_name || 'No name'})
+                                </label>
+                            </div>
+                        </div>
+                    `).join('');
         } catch (error) {
             console.error('Failed to fetch listener lectures:', error);
         }
@@ -231,16 +233,16 @@ const LectureManager = {
             if (!data?.listeners) return;
 
             DOM.listenersList.innerHTML = data.listeners.map(listener => `
-      <div class="list-group-item d-flex align-items-center">
-        <div class="form-check flex-grow-1">
-          <input class="form-check-input" type="checkbox" 
-                id="listener-${listener._id}">
-          <label class="form-check-label ms-2" for="listener-${listener._id}">
-            ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
-          </label>
-        </div>
-      </div>
-    `).join('');
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="form-check flex-grow-1">
+                                <input class="form-check-input" type="checkbox" 
+                                      id="listener-${listener._id}">
+                                <label class="form-check-label ms-2" for="listener-${listener._id}">
+                                    ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
+                                </label>
+                            </div>
+                        </div>
+                    `).join('');
         } catch (error) {
             console.error('Failed to fetch listeners:', error);
         }
@@ -254,16 +256,15 @@ const LectureManager = {
             if (!data?.lectures) return;
 
             DOM.lecturesContainer.innerHTML = data.lectures.map(lecture => `
-        <div class="list-group-item lecture-card">
-          <h5>${lecture.name}</h5>
-          <button class="btn btn-sm btn-primary" 
-                  data-lecture="${encodeURIComponent(lecture.name)}">
-            Открыть
-          </button>
-        </div>
-      `).join('');
+                        <div class="list-group-item lecture-card">
+                            <h5>${lecture.name}</h5>
+                            <button class="btn btn-sm btn-primary" 
+                                    data-lecture="${encodeURIComponent(lecture.name)}">
+                                Открыть
+                            </button>
+                        </div>
+                    `).join('');
 
-            // Добавляем обработчики через делегирование событий
             DOM.lecturesContainer.addEventListener('click', (e) => {
                 const button = e.target.closest('[data-lecture]');
                 if (button) {
@@ -298,8 +299,6 @@ const LectureManager = {
             data: selectedListeners.length > 0 ? selectedListeners : [0]
         };
 
-        // tg.showAlert(JSON.stringify(requestData));
-
         const result = await ApiService.request('save_lecture', {
             method: 'POST',
             data: requestData
@@ -332,60 +331,96 @@ const LectureManager = {
     },
 
     async editLectureListeners() {
-        // try {
         const lectureName = DOM.currentLectureTitle.textContent;
 
-        // 1. Получаем текущих слушателей лекции
-        const lectureData = await ApiService.request('get_listeners_from_lecture', {
-            params: {
-                name: lectureName,
-                speaker_id: userId
-            }
-        });
-
-        // 2. Получаем всех доступных слушателей
-        const allListeners = await ApiService.request('get_listeners', {
-            params: {speaker_id: userId}
-        });
+        const [lectureData, allListeners] = await Promise.all([
+            ApiService.request('get_listeners_from_lecture', {
+                params: {name: lectureName, speaker_id: userId}
+            }),
+            ApiService.request('get_listeners', {params: {speaker_id: userId}})
+        ]);
 
         if (!allListeners?.listeners) return;
 
-        // 3. Отмечаем уже выбранных слушателей
         const currentListeners = lectureData?.listeners?.map(l => l._id) || [];
 
-        // 4. Показываем форму редактирования
         DOM.listenersList.innerHTML = allListeners.listeners.map(listener => `
-        <div class="list-group-item d-flex align-items-center">
-          <div class="form-check flex-grow-1">
-            <input class="form-check-input" type="checkbox" 
-                  id="listener-${listener._id}"
-                  ${currentListeners.includes(listener._id) ? 'checked' : ''}>
-            <label class="form-check-label ms-2" for="listener-${listener._id}">
-              ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
-            </label>
-          </div>
-        </div>
-      `).join('');
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="form-check flex-grow-1">
+                            <input class="form-check-input" type="checkbox" 
+                                  id="listener-${listener._id}"
+                                  ${currentListeners.includes(listener._id) ? 'checked' : ''}>
+                            <label class="form-check-label ms-2" for="listener-${listener._id}">
+                                ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
+                            </label>
+                        </div>
+                    </div>
+                `).join('');
 
-        // 5. Обновляем UI
         DOM.currentEditLectureTitle.textContent = `Редактирование: ${lectureName}`;
-        DOM.lectureNameInput.value = lectureName
+        DOM.lectureNameInput.value = lectureName;
         Navigation.show('editLectureForm');
+    },
+
+    initMeetingForm() {
+        const lectureName = DOM.currentLectureTitle.textContent;
+        DOM.currentMeetingLectureTitle.textContent = `Новая встреча: ${lectureName}`;
+
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 10);
+
+        const formattedDateTime = now.toISOString().slice(0, 16);
+
+        DOM.meetingDateTime.min = formattedDateTime;
+        DOM.meetingDateTime.value = formattedDateTime;
+        DOM.meetingDateTime.classList.remove('is-invalid');
+    },
+
+    async createMeeting() {
+        const selectedDateTime = new Date(DOM.meetingDateTime.value);
+        const minDateTime = new Date();
+        minDateTime.setMinutes(minDateTime.getMinutes() + 10);
+
+        if (!DOM.meetingDateTime.value || selectedDateTime < minDateTime) {
+            DOM.meetingDateTime.classList.add('is-invalid');
+            tg.showAlert('Выберите корректную дату и время (не ранее чем через 10 минут)');
+            return false;
+        }
+
+        const lectureName = DOM.currentLectureTitle.textContent;
+
+        try {
+            const result = await ApiService.request('create_meeting', {
+                method: 'POST',
+                data: {
+                    lecture_name: lectureName,
+                    speaker: userId,
+                    start_datetime: selectedDateTime.toISOString()
+                }
+            });
+
+            if (result) {
+                tg.showAlert('Встреча успешно создана!');
+                return true;
+            }
+        } catch (error) {
+            console.error('Ошибка создания встречи:', error);
+            tg.showAlert('Не удалось создать встречу');
+        }
+        return false;
     }
 };
 
 const Navigation = {
     show(screen) {
-        // Скрываем все экраны
         [
             DOM.appMainMenu, DOM.mainMenu, DOM.listenerMenu,
             DOM.joinSpeakerForm, DOM.leaveSpeakerForm,
-            DOM.newLectureForm, DOM.lecturesList, DOM.editLectureMenu
-        ].forEach(el => {
-            el?.classList.add('hidden');
-        });
+            DOM.newLectureForm, DOM.lecturesList, DOM.editLectureMenu,
+            DOM.newMeetingForm
+        ].forEach(el => el?.classList.add('hidden'));
 
-        const currentScreen = {
+        const screens = {
             'appMainMenu': DOM.appMainMenu,
             'mainMenu': DOM.mainMenu,
             'listenerMenu': DOM.listenerMenu,
@@ -394,31 +429,36 @@ const Navigation = {
             'newLectureForm': DOM.newLectureForm,
             'editLectureForm': DOM.newLectureForm,
             'lecturesList': DOM.lecturesList,
-            'editLectureMenu': DOM.editLectureMenu
-        }[screen];
+            'editLectureMenu': DOM.editLectureMenu,
+            'newMeetingForm': DOM.newMeetingForm,
+        };
 
-        if (currentScreen) {
-            currentScreen.classList.remove('hidden');
+        if (screens[screen]) {
+            screens[screen].classList.remove('hidden');
         }
 
-        // Инициализация экранов при показе
-        if (screen === 'newLectureForm') {
-            DOM.currentEditLectureTitle.textContent = `Новая лекция`;
-            LectureManager.fetchListeners().catch(console.error);
-        }
-        if (screen === 'lecturesList') {
-            LectureManager.fetchLectures().catch(console.error);
-        }
-        if (screen === 'joinSpeakerForm') {
-            ListenerManager.fetchSpeakers().catch(console.error);
-        }
-        if (screen === 'leaveSpeakerForm') {
-            ListenerManager.fetchMySpeakers().catch(console.error);
+        // Инициализация экранов
+        switch (screen) {
+            case 'newLectureForm':
+                DOM.currentEditLectureTitle.textContent = 'Новая лекция';
+                LectureManager.fetchListeners().catch(console.error);
+                break;
+            case 'lecturesList':
+                LectureManager.fetchLectures().catch(console.error);
+                break;
+            case 'joinSpeakerForm':
+                ListenerManager.fetchSpeakers().catch(console.error);
+                break;
+            case 'leaveSpeakerForm':
+                ListenerManager.fetchMySpeakers().catch(console.error);
+                break;
+            case 'newMeetingForm':
+                LectureManager.initMeetingForm();
+                break;
         }
     }
 };
 
-// Обновляем инициализацию обработчиков
 document.addEventListener('DOMContentLoaded', () => {
     // Проверка DOM элементов
     Object.entries(DOM).forEach(([name, element]) => {
@@ -449,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.backFromJoinSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
     DOM.backFromleaveSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
 
-    // Существующие обработчики
+    // Лекции
     DOM.saveLectureBtn?.addEventListener('click', () => LectureManager.saveLecture().catch(console.error));
     DOM.backFromNewLectureBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
     DOM.backFromLecturesBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
@@ -457,6 +497,17 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.backFromEditBtn?.addEventListener('click', () => Navigation.show('lecturesList'));
     DOM.editListenersBtn?.addEventListener('click', () => LectureManager.editLectureListeners().catch(console.error));
 
-    // Показать главное меню приложения по умолчанию
+    // Встречи
+    DOM.newMeetingBtn?.addEventListener('click', () => {
+        Navigation.show('newMeetingForm');
+    });
+    DOM.confirmMeetingBtn?.addEventListener('click', async () => {
+        if (await LectureManager.createMeeting()) {
+            Navigation.show('editLectureMenu');
+        }
+    });
+    DOM.backFromMeetingFormBtn?.addEventListener('click', () => Navigation.show('editLectureMenu'));
+
+    // Стартовая страница
     Navigation.show('appMainMenu');
 });
