@@ -29,6 +29,7 @@ async def create_livekit_conference(
         speaker=ConferenceParticipant(
             **ConferenceParticipantCreate.model_dump(speaker)
         ),
+        lecture_name=conference.lecture_name,
         listeners=[
             ConferenceParticipant(**ConferenceParticipantCreate.model_dump(user))
             for user in listeners

@@ -44,9 +44,9 @@ async def send_messages_to_users_task(recipients_ids: Iterable[int], text: str) 
 
 @broker.task()
 async def send_individual_message_to_users_task(user_id: int, text: str) -> None:
-    logger.warning(settings.tg.token)
     async with Bot(token=settings.tg.token) as bot:
-        message_id=await bot.send_message(user_id, text)
+        message_id=await bot.send_message(user_id, text, parse_mode="HTML")
+
 
 
 async def create_task_for_tg_messages(
@@ -61,9 +61,10 @@ async def create_task_for_tg_messages(
     current_time = datetime.datetime.now(datetime.timezone.utc)
     if target_time > current_time:
         for recipient in recipients_info:
-            full_message = (f"Здравствуйте, {recipient.first_name} {recipient.last_name} ({recipient.username})"
-                            f", {text}?token={recipients_token[recipient.id]} ."
-                            f" Начало конференции через {str(time_delta)}")
+            full_message = (f"Здравствуйте, {recipient.first_name} {recipient.last_name} ({recipient.username}).\n"
+                            f"{text}?token={recipients_token[recipient.id]}'>Ссылка для перехода</a>.\n"
+                            f"Название лекции <b>{conference.lecture_name}</b>.\n"
+                            f"Начало конференции через {str(time_delta)}")
             await send_individual_message_to_users_task.schedule_by_time(
                 redis_source,
                 target_time,
@@ -78,11 +79,11 @@ async def create_task_for_tg_messages(
 async def send_messages_about_conference_task(conference_id: str) -> None:
     conference = await get_conference(conference_id)
     speaker = await get_user(conference.speaker.user_id)
-    text = (f"вас приглашают на конференцию, которая состоится {conference.start_datetime.strftime("%d.%m.%Y")}"
-            f" в {conference.start_datetime.strftime("%H:%M")}."
-            f" Спикер {speaker.first_name} {speaker.last_name} ({speaker.username})."
-            f" Ориентировочная длительность {conference.duration} минут."
-            f" Ссылка для перехода {conference.conference_link}")
+    text = (f"Вас приглашают на конференцию, которая состоится <b>{conference.start_datetime.strftime("%d.%m.%Y")}"
+            f" в {conference.start_datetime.strftime("%H:%M")}</b>.\n"
+            f"Спикер {speaker.first_name} {speaker.last_name} ({speaker.username}).\n"
+            f"Ориентировочная длительность <b>{conference.duration}</b> минут.\n"
+            f"<a href='{conference.conference_link}")
     await create_task_for_tg_messages(conference, datetime.timedelta(minutes=10), text=text)
     await create_task_for_tg_messages(conference, datetime.timedelta(hours=1), text=text)
     await create_task_for_tg_messages(conference, datetime.timedelta(days=1), text=text)
