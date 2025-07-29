@@ -18,7 +18,7 @@ class ConferenceCreateModel(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     speaker: int
-    lecture_name: str
+    lecture_name: str = "undefined"
     listeners: list[int] = list
     start_datetime: datetime
     duration: int = 40

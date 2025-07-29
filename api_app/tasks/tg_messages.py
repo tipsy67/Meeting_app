@@ -2,7 +2,9 @@ import logging
 import datetime
 from typing import Iterable
 
-from api_app.core.taskiq_broker import broker
+from taskiq import ScheduledTask
+
+from api_app.core.taskiq_broker import broker, redis_source
 from aiogram import Bot
 from api_app.core.config import settings
 from api_app.datebases.conference_requests import get_conference
@@ -40,29 +42,36 @@ async def send_messages_to_users_task(recipients_ids: Iterable[int], text: str) 
             await bot.send_message(recipient.id, full_message)
 
 
-@broker.task
+@broker.task()
 async def send_individual_message_to_users_task(user_id: int, text: str) -> None:
+    logger.warning(settings.tg.token)
     async with Bot(token=settings.tg.token) as bot:
         message_id=await bot.send_message(user_id, text)
 
 
 async def create_task_for_tg_messages(
-    conference: ConferenceCreateModel,
+    conference: ConferenceOutputModel,
     time_delta: datetime.timedelta,
     text: str
 ) -> None:
-    recipients_ids = [user["user_id"] for user in conference.listenerers]
+    recipients_ids = [user.user_id for user in conference.listeners]
     recipients_info = await get_users(recipients_ids)
-    recipients_token = {user["user_id"]: user["id"] for user in conference.listeners}
-    target_time = conference.start_datetime - time_delta
-    if target_time > datetime.datetime.now():
+    recipients_token = {user.user_id: user.id for user in conference.listeners}
+    target_time = (conference.start_datetime - time_delta).replace(tzinfo=datetime.timezone.utc)
+    current_time = datetime.datetime.now(datetime.timezone.utc)
+    if target_time > current_time:
         for recipient in recipients_info:
             full_message = (f"Здравствуйте, {recipient.first_name} {recipient.last_name} ({recipient.username})"
                             f", {text}?token={recipients_token[recipient.id]} ."
                             f" Начало конференции через {str(time_delta)}")
-            await send_individual_message_to_users_task.kiq(
-                user_id=recipient.id, text=full_message, eta=target_time
+            await send_individual_message_to_users_task.schedule_by_time(
+                redis_source,
+                target_time,
+                user_id=recipient.id,
+                text=full_message
             )
+            logger.warning(f"target_time {target_time} in {recipient.id} {type(recipient.id)}")
+
 
 
 @broker.task

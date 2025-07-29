@@ -6,6 +6,7 @@ from starlette import status
 
 from api_app.conference_backend.conference import create_conference
 from api_app.datebases.conference_requests import get_conference
+from api_app.datebases.users_requests import get_listeners_ids_from_lecture
 from api_app.schemas.conferences import ConferenceCreateModel
 from api_app.schemas.errors import ErrorResponseModel
 
@@ -21,6 +22,8 @@ async def create_conference_rt(conference: ConferenceCreateModel):
     Create a new conference.
     """
     conference.end_datetime = conference.start_datetime + datetime.timedelta(minutes=conference.duration)
+    listeners = await get_listeners_ids_from_lecture(conference.speaker, conference.lecture_name)
+    conference.listeners = listeners["listeners"]
     conference_output = await create_conference(CONFERENCE_BACKEND, conference)
     await srv.create_conference(conference_output.id)
 

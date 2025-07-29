@@ -394,7 +394,7 @@ const LectureManager = {
                 method: 'POST',
                 data: {
                     lecture_name: lectureName,
-                    speaker_id: userId,
+                    speaker: userId,
                     start_datetime: selectedDateTime.toISOString()
                 }
             });
