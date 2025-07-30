@@ -1,12 +1,21 @@
-__all__ = ("broker",)
+__all__ = ("broker", "redis_source", "scheduler")
 
 import taskiq_fastapi
-from taskiq_aio_pika import AioPikaBroker
+from taskiq import TaskiqScheduler
+from taskiq_redis import RedisAsyncResultBackend, RedisScheduleSource, RedisStreamBroker
 
-from api_app.core.config import settings
+# broker = AioPikaBroker(url=settings.rabbitmq.url)
+#
 
-broker = AioPikaBroker(
-    url=settings.rabbitmq.url
+result_backend = RedisAsyncResultBackend(
+    redis_url="redis://localhost:6379",
 )
 
-taskiq_fastapi.init(broker, "main:api_main_app")
+broker = RedisStreamBroker(
+    url="redis://localhost:6379",
+).with_result_backend(result_backend)
+
+redis_source = RedisScheduleSource("redis://localhost:6379/0")
+scheduler = TaskiqScheduler(broker, sources=[redis_source])
+
+taskiq_fastapi.init(broker, "api_app.main:api_main_app")

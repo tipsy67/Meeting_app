@@ -2,16 +2,19 @@
 Module for Google Calendar API utilities.
 Manage events & meets
 """
+
 import datetime
-from google_services.api_access import get_access_token
+
 import httpx
+
+from google_services.api_access import get_access_token
 
 
 async def create_event(
-        summary: str,
-        start_time: str,
-        end_time: str,
-        description: str = "",
+    summary: str,
+    start_time: str,
+    end_time: str,
+    description: str = "",
 ) -> dict | None:
     """
     Create a calendar event.
@@ -27,7 +30,7 @@ async def create_event(
     except Exception as e:
         print(f"Error with access_token at create_event: {e}")
         return None
-    
+
     params = {
         "calendarId": "primary",
         "sendUpdates": "all",
@@ -36,7 +39,7 @@ async def create_event(
 
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     event_data = {
@@ -47,11 +50,9 @@ async def create_event(
         "conferenceData": {
             "createRequest": {
                 "requestId": f"{datetime.datetime.now().isoformat()}",
-                "conferenceSolutionKey": {
-                    "type": "hangoutsMeet"
-                }
+                "conferenceSolutionKey": {"type": "hangoutsMeet"},
             }
-        }
+        },
     }
 
     async with httpx.AsyncClient() as client:
@@ -60,7 +61,7 @@ async def create_event(
                 url="https://www.googleapis.com/calendar/v3/calendars/primary/events",
                 params=params,
                 json=event_data,
-                headers=headers
+                headers=headers,
             )
             response.raise_for_status()
             return response.json()["conferenceData"]["entryPoints"][0]["uri"]
@@ -68,5 +69,5 @@ async def create_event(
             print(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
         except Exception as e:
             print(f"Error creating event: {e}")
-    
+
     return None

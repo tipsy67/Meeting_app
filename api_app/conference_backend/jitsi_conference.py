@@ -1,23 +1,31 @@
 """
 Module for managing Jitsi conference operations.
 """
-from api_app.settings import JITSI_BACKEND
-from api_app.schemas.conferences import ConferenceCreateModel, ConferenceModel, ConferenceOutputModel, RecordingModel, ConferenceParticipant
-from api_app.schemas.errors import ErrorResponseModel
+
 from api_app.datebases import conference_requests as db_requests
 from api_app.datebases.conference_requests import get_stream_by_user_id
+from api_app.schemas.conferences import (
+    ConferenceCreateModel,
+    ConferenceModel,
+    ConferenceOutputModel,
+    ConferenceParticipant,
+    RecordingModel,
+)
+from api_app.schemas.errors import ErrorResponseModel
+from api_app.settings import JITSI_BACKEND
 from google_services.youtube_api_utils import create_broadcast_async
 
 
-async def create_jitsi_recording(conference: ConferenceModel) -> RecordingModel | ErrorResponseModel:
+async def create_jitsi_recording(
+    conference: ConferenceModel,
+) -> RecordingModel | ErrorResponseModel:
     """
     Create a Jitsi recording.
     """
     stream = await get_stream_by_user_id(conference.speaker_id)
     if not stream:
         return ErrorResponseModel(
-            detail="Stream not found for the speaker", 
-            status_code=404
+            detail="Stream not found for the speaker", status_code=404
         )
     broadcast = await create_broadcast_async(
         title=f"broadcast for user#{conference.speaker_id}",
@@ -26,17 +34,17 @@ async def create_jitsi_recording(conference: ConferenceModel) -> RecordingModel 
         stream_id=stream.id,
     )
     if not broadcast:
-        return ErrorResponseModel(
-            detail="Failed to create broadcast", status_code=500
-        )
+        return ErrorResponseModel(detail="Failed to create broadcast", status_code=500)
     recording_object = RecordingModel(
         conference_id=conference.id,
-        recording_url=f"https://www.youtube.com/live/{broadcast}"
+        recording_url=f"https://www.youtube.com/live/{broadcast}",
     )
     return recording_object
 
 
-async def create_jitsi_conference(conference: ConferenceCreateModel) -> ConferenceOutputModel | ErrorResponseModel:
+async def create_jitsi_conference(
+    conference: ConferenceCreateModel,
+) -> ConferenceOutputModel | ErrorResponseModel:
     """
     Create a Jitsi conference.
     """
@@ -49,9 +57,11 @@ async def create_jitsi_conference(conference: ConferenceCreateModel) -> Conferen
         end_datetime=conference.end_datetime,
         conference_link=f"{JITSI_BACKEND['host']}/{conference.id}",
         recording=conference.recording,
-        is_ended=conference.is_ended
+        is_ended=conference.is_ended,
     )
-    response: ConferenceModel | ErrorResponseModel = await db_requests.insert_conference(conference_db)
+    response: ConferenceModel | ErrorResponseModel = (
+        await db_requests.insert_conference(conference_db)
+    )
     if isinstance(response, ErrorResponseModel):
         return response
     conference_output = ConferenceOutputModel(
