@@ -3,11 +3,11 @@ Utils for the Jitsi app.
 This module contains utility functions and constants used in the Jitsi app.
 """
 
+from api_app.datebases.conference_requests import get_conference
+from api_app.datebases.config_base import users_collection
 from api_app.schemas.conferences import ConferenceModel
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.schemas.users import UserResponse
-from api_app.datebases.config_base import users_collection
-from api_app.datebases.conference_requests import get_conference
 
 
 async def get_conference_by_id(

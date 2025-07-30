@@ -2,9 +2,10 @@
 Module for Telegram API staff
 """
 
-from aiogram import Bot
 import httpx
-from live_kit_app.config import TG_TOKEN, API_API_URL
+from aiogram import Bot
+
+from live_kit_app.config import API_API_URL, TG_TOKEN
 
 
 async def send_message_to_listeners(conference_id: str, message: str, name: str):

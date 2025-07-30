@@ -2,20 +2,17 @@
 Module with factories for manageing different conference backends.
 """
 
-from typing import Dict, Callable
-from api_app.schemas.conferences import (
-    ConferenceCreateModel,
-    ConferenceModel,
-    ConferenceOutputModel,
-    RecordingModel,
-)
-from api_app.schemas.errors import ErrorResponseModel
-from api_app.conference_backend.jitsi_conference import create_jitsi_conference
-from api_app.conference_backend.google_meet_conference import (
-    create_goole_meet_conference,
-)
-from api_app.conference_backend.livekit_conference import create_livekit_conference
+from typing import Callable, Dict
 
+from api_app.conference_backend.google_meet_conference import \
+    create_goole_meet_conference
+from api_app.conference_backend.jitsi_conference import create_jitsi_conference
+from api_app.conference_backend.livekit_conference import \
+    create_livekit_conference
+from api_app.schemas.conferences import (ConferenceCreateModel,
+                                         ConferenceModel,
+                                         ConferenceOutputModel, RecordingModel)
+from api_app.schemas.errors import ErrorResponseModel
 
 conference_creators: Dict[str, Callable] = {
     "google_meet": create_goole_meet_conference,

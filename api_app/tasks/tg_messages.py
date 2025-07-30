@@ -1,15 +1,17 @@
-import logging
 import datetime
+import logging
 from typing import Iterable
 
+from aiogram import Bot
+
+from api_app.core.config import settings
 from api_app.core.l10n import l10n
 from api_app.core.taskiq_broker import broker, redis_source
-from aiogram import Bot
-from api_app.core.config import settings
 from api_app.datebases.conference_requests import get_conference
-from api_app.schemas.conferences import ConferenceOutputModel, ConferenceCreateModel
-from api_app.schemas.users import UserResponse
 from api_app.datebases.users_requests import get_user, get_users
+from api_app.schemas.conferences import (ConferenceCreateModel,
+                                         ConferenceOutputModel)
+from api_app.schemas.users import UserResponse
 
 logger = logging.getLogger("taskiq")
 logger.setLevel(logging.INFO)
@@ -117,9 +119,7 @@ async def send_messages_about_conference_task(conference_id: str) -> None:
     await create_task_for_tg_messages(
         conference, datetime.timedelta(hours=1), text=text
     )
-    await create_task_for_tg_messages(
-        conference, datetime.timedelta(days=1), text=text
-    )
+    await create_task_for_tg_messages(conference, datetime.timedelta(days=1), text=text)
 
 
 @broker.task

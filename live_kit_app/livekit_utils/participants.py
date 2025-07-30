@@ -3,8 +3,11 @@ Module for manage Participants
 LiveKit API
 """
 
-from livekit.api import LiveKitAPI, ListParticipantsRequest, RoomParticipantIdentity
-from live_kit_app.config import LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL
+from livekit.api import (ListParticipantsRequest, LiveKitAPI,
+                         RoomParticipantIdentity)
+
+from live_kit_app.config import (LIVEKIT_API_KEY, LIVEKIT_API_SECRET,
+                                 LIVEKIT_URL)
 
 
 async def get_participants(room_name: str):

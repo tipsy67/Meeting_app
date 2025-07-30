@@ -4,13 +4,14 @@ This application with one page with meeting window.
 """
 
 import os
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 from api_app.schemas.errors import ErrorResponseModel
 from jitsi_app.utils import get_conference_by_id, get_user_by_id
-
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 

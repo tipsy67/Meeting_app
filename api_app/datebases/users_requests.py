@@ -2,17 +2,12 @@ from datetime import datetime
 from typing import Iterable
 
 from fastapi import HTTPException
-
-
 from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import (
-    UserCreateUpdate,
-    UserResponse,
-    SpeakerListenerResponse,
-)
+from api_app.schemas.users import (SpeakerListenerResponse, UserCreateUpdate,
+                                   UserResponse)
 
 
 async def get_user(tg_user_id: int) -> UserResponse:

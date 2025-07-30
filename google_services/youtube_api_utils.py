@@ -3,8 +3,10 @@ Module for working with Youtube API
 """
 
 import datetime
-from google_services.api_access import get_access_token
+
 import httpx
+
+from google_services.api_access import get_access_token
 
 
 async def create_stream_async(title: str) -> dict | None:

@@ -1,13 +1,11 @@
 from fastapi import APIRouter
 from starlette import status
 
+from api_app.datebases import \
+    users_requests as db  # напрямую через функции работающие с БД
 from api_app.schemas.users import LectureRequest
-from api_app.datebases import (
-    users_requests as db,
-)  # напрямую через функции работающие с БД
-from api_app.services import (
-    users as srv,
-)  # через сервисную прослойку для создания отложенных задач
+from api_app.services import \
+    users as srv  # через сервисную прослойку для создания отложенных задач
 
 router = APIRouter(prefix="/lectures", tags=["lectures"])
 

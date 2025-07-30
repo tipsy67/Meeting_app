@@ -3,6 +3,7 @@ Config Module for LiveKit App
 """
 
 import os
+
 import dotenv
 
 dotenv.load_dotenv()

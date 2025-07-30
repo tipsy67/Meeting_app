@@ -3,13 +3,11 @@ Module for manage Rooms
 LiveKit API
 """
 
-from livekit.api import (
-    LiveKitAPI,
-    ListRoomsRequest,
-    CreateRoomRequest,
-    DeleteRoomRequest,
-)
-from live_kit_app.config import LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL
+from livekit.api import (CreateRoomRequest, DeleteRoomRequest,
+                         ListRoomsRequest, LiveKitAPI)
+
+from live_kit_app.config import (LIVEKIT_API_KEY, LIVEKIT_API_SECRET,
+                                 LIVEKIT_URL)
 
 
 async def create_room(name: str, max_participants: int):

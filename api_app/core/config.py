@@ -4,7 +4,7 @@ Settings for the API application.
 
 from enum import Enum
 
-from pydantic import BaseModel, AmqpDsn, Field, Extra
+from pydantic import AmqpDsn, BaseModel, Extra, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

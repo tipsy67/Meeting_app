@@ -3,16 +3,19 @@ Main module for LiveKit App
 """
 
 from datetime import datetime, timezone
+
 import httpx
-from pydantic import ValidationError
-from fastapi import FastAPI, Request, Header, status, HTTPException, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi import (BackgroundTasks, FastAPI, Header, HTTPException, Request,
+                     status)
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from livekit.api import WebhookEvent
-from live_kit_app.livekit_utils.token import get_token
-from live_kit_app.schemas import TelegramMessage
+from pydantic import ValidationError
+
 from live_kit_app.config import ALLOW_ORIGINS, API_API_URL
+from live_kit_app.livekit_utils.token import get_token
 from live_kit_app.livekit_utils.webhooks import webhook_receiver
+from live_kit_app.schemas import TelegramMessage
 from live_kit_app.telegram_utils import send_message_to_listeners
 
 app = FastAPI()

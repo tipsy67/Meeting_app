@@ -2,10 +2,10 @@ import asyncio
 import datetime
 from pathlib import Path
 
-from fluent.runtime import FluentResourceLoader, FluentLocalization
+from fluent.runtime import FluentLocalization, FluentResourceLoader
 
 from api_app.core.config import settings
-from api_app.schemas.users import UserResponse, UserCreateUpdate
+from api_app.schemas.users import UserCreateUpdate, UserResponse
 
 
 class L10n:

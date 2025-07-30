@@ -1,12 +1,10 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
-
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
 from tg_app.bot.databases import api_requests
 from tg_app.bot.keyboards import userkb
-
 
 user = Router()
 

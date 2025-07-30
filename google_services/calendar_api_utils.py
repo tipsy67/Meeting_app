@@ -4,8 +4,10 @@ Manage events & meets
 """
 
 import datetime
-from google_services.api_access import get_access_token
+
 import httpx
+
+from google_services.api_access import get_access_token
 
 
 async def create_event(
