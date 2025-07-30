@@ -98,6 +98,11 @@
             <div class="invalid-feedback">Пожалуйста, выберите корректную дату и время (не ранее чем через 10 минут)
             </div>
         </div>
+        <div class="mb-3">
+            <label class="form-label">Длительность лекции (минут)</label>
+            <input type="number" class="form-control" id="lectureDuration" min="5" max="180" value="60" required>
+            <div class="invalid-feedback">Пожалуйста, выберите длительность от 5 до 180 минут</div>
+        </div>
         <button id="confirmMeetingBtn" class="btn btn-success">Создать встречу</button>
         <button id="backFromMeetingFormBtn" class="btn btn-outline-secondary">Назад</button>
     </div>

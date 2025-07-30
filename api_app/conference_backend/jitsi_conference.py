@@ -4,10 +4,13 @@ Module for managing Jitsi conference operations.
 
 from api_app.datebases import conference_requests as db_requests
 from api_app.datebases.conference_requests import get_stream_by_user_id
-from api_app.schemas.conferences import (ConferenceCreateModel,
-                                         ConferenceModel,
-                                         ConferenceOutputModel,
-                                         ConferenceParticipant, RecordingModel)
+from api_app.schemas.conferences import (
+    ConferenceCreateModel,
+    ConferenceModel,
+    ConferenceOutputModel,
+    ConferenceParticipant,
+    RecordingModel,
+)
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.settings import JITSI_BACKEND
 from google_services.youtube_api_utils import create_broadcast_async

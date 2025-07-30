@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
-                           WebAppInfo)
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
 
 def create_buttons(l10n, buttons_data: list[tuple[str, str]]) -> InlineKeyboardMarkup:

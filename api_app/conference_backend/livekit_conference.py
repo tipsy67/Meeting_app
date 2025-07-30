@@ -3,11 +3,13 @@ Module for managing LiveKit conference operations.
 """
 
 from api_app.datebases import conference_requests as db_requests
-from api_app.schemas.conferences import (ConferenceCreateModel,
-                                         ConferenceModel,
-                                         ConferenceOutputModel,
-                                         ConferenceParticipant,
-                                         ConferenceParticipantCreate)
+from api_app.schemas.conferences import (
+    ConferenceCreateModel,
+    ConferenceModel,
+    ConferenceOutputModel,
+    ConferenceParticipant,
+    ConferenceParticipantCreate,
+)
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.settings import LIVEKIT_BACKEND
 
@@ -28,6 +30,7 @@ async def create_livekit_conference(
             **ConferenceParticipantCreate.model_dump(speaker)
         ),
         lecture_name=conference.lecture_name,
+        duration=conference.duration,
         listeners=[
             ConferenceParticipant(**ConferenceParticipantCreate.model_dump(user))
             for user in listeners
