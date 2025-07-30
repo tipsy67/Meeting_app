@@ -24,11 +24,6 @@ welcome-notification =
     }!
 
 ### Conference notifications ###
-conference-notification =
-    { $text }?token={ $token }'>Click to join</a>.
-    Lecture: <b>{ $lecture_name }</b>.
-    Starts in: { $time_to_start }
-
 conference-invitation =
     You're invited to a conference!
     Date: <b>{ $date }</b> at <b>{ $time }</b>
@@ -36,8 +31,19 @@ conference-invitation =
         [null] { "" }
        *[other] (@{ $speaker_username })
     }
+    Lecture: <b>{ $lecture_name }</b>.
+    Starts in: { $time_to_start }
     Duration: <b>{ $duration } minutes</b>
-    Link: <a href='{ $link }
+    Link: <a href='{ $link }?token={ $token }'>Click to join</a>.
+
+
+conference-speaker =
+    We remind you about the conference!
+    Date: <b>{ $date }</b> at <b>{ $time }</b>
+    Lecture: <b>{ $lecture_name }</b>.
+    Starts in: { $time_to_start }
+    Duration: <b>{ $duration } minutes</b>
+    Link: <a href='{ $link }'>Click to begin</a>.
 
 ### Time formats ###
 time-duration =
@@ -46,7 +52,10 @@ time-duration =
         [1] 1 day
        *[other] { $days } days
     } { $hours ->
-        [0] { $minutes } min
-        [1] 1 hour { $minutes } min
-       *[other] { $hours } hours { $minutes } min
+        [0] { "" }
+        [1] 1 hour
+       *[other] { $hours } hours
+    } { $minutes ->
+        [0] { "" }
+       *[other] { $minutes } min
     }

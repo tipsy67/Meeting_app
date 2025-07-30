@@ -85,7 +85,8 @@ const DOM = {
     meetingDateTime: document.getElementById('meetingDateTime'),
     confirmMeetingBtn: document.getElementById('confirmMeetingBtn'),
     backFromMeetingFormBtn: document.getElementById('backFromMeetingFormBtn'),
-    currentMeetingLectureTitle: document.getElementById('currentMeetingLectureTitle')
+    currentMeetingLectureTitle: document.getElementById('currentMeetingLectureTitle'),
+    lectureDuration: document.getElementById('lectureDuration'),
 };
 
 // Сервис API
@@ -369,11 +370,13 @@ const LectureManager = {
         const now = new Date();
         now.setMinutes(now.getMinutes() + 10);
 
-        const formattedDateTime = now.toISOString().slice(0, 16);
+        const formattedDateTime = now.toString().slice(0, 16);
 
         DOM.meetingDateTime.min = formattedDateTime;
         DOM.meetingDateTime.value = formattedDateTime;
         DOM.meetingDateTime.classList.remove('is-invalid');
+
+        DOM.lectureDuration.classList.remove('is-invalid');
     },
 
     async createMeeting() {
@@ -381,6 +384,12 @@ const LectureManager = {
         const minDateTime = new Date();
         minDateTime.setMinutes(minDateTime.getMinutes() + 10);
 
+        const duration = parseInt(DOM.lectureDuration.value) || 60;
+        if (duration < 5 || duration > 180) {
+            DOM.lectureDuration.classList.add('is-invalid');
+            tg.showAlert('Пожалуйста, выберите длительность от 5 до 180 минут');
+            return false;
+        }
         if (!DOM.meetingDateTime.value || selectedDateTime < minDateTime) {
             DOM.meetingDateTime.classList.add('is-invalid');
             tg.showAlert('Выберите корректную дату и время (не ранее чем через 10 минут)');
@@ -395,7 +404,8 @@ const LectureManager = {
                 data: {
                     lecture_name: lectureName,
                     speaker: userId,
-                    start_datetime: selectedDateTime.toISOString()
+                    start_datetime: selectedDateTime.toISOString(),
+                    duration: duration,
                 }
             });
 

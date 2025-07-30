@@ -6,8 +6,11 @@ from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import (SpeakerListenerResponse, UserCreateUpdate,
-                                   UserResponse)
+from api_app.schemas.users import (
+    SpeakerListenerResponse,
+    UserCreateUpdate,
+    UserResponse,
+)
 
 
 async def get_user(tg_user_id: int) -> UserResponse:
@@ -42,6 +45,7 @@ async def set_user(tg_user: UserCreateUpdate) -> UserResponse:
                 "first_name": tg_user.first_name,
                 "last_name": tg_user.last_name,
                 "last_activity": now,
+                "language_code": tg_user.language_code,
             },
             "$setOnInsert": {"_id": tg_user.id, "created_at": now, "is_active": True},
         },

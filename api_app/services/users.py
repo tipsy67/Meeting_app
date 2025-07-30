@@ -2,11 +2,12 @@ from datetime import datetime
 
 from api_app.core.l10n import l10n
 from api_app.datebases import users_requests as db
-from api_app.datebases.users_requests import (get_listeners_ids_from_lecture,
-                                              get_user)
+from api_app.datebases.users_requests import get_listeners_ids_from_lecture, get_user
 from api_app.schemas.users import SpeakerListenerResponse, UserResponse
-from api_app.tasks.tg_messages import (send_message_to_speaker_task,
-                                       send_messages_to_users_task)
+from api_app.tasks.tg_messages import (
+    send_message_to_speaker_task,
+    send_messages_to_users_task,
+)
 
 
 async def add_listener_to_speaker(data):
@@ -54,7 +55,7 @@ async def save_lecture(data):
     if removed_listeners:
         await send_messages_to_users_task.kiq(
             recipients_ids=removed_listeners,
-            text=f"{speaker.first_name} {speaker.last_name} ({speaker.username})"
+            text=f"{speaker.first_name} {speaker.last_name} (@{speaker.username})"
             f" remove_from_lecture {lecture_name}",
             alias_text="remove_from_lecture",
         )
@@ -73,7 +74,7 @@ async def delete_lecture(speaker_id: int, lecture_name: str):
     if removed_listeners:
         await send_messages_to_users_task.kiq(
             recipients_ids=removed_listeners,
-            text=f"{speaker.first_name} {speaker.last_name} ({speaker.username})"
+            text=f"{speaker.first_name} {speaker.last_name} (@{speaker.username})"
             f" удалил лекцию {lecture_name}",
         )
 

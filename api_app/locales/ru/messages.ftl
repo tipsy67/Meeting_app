@@ -25,11 +25,6 @@ welcome-notification =
 
 
 ### Уведомления о конференции ###
-conference-notification =
-    { $text }?token={ $token }'>Перейти к конференции</a>.
-    Лекция: <b>{ $lecture_name }</b>.
-    Начало через: { $time_to_start }
-
 conference-invitation =
     Вы приглашены на конференцию!
     Дата: <b>{ $date }</b> в <b>{ $time }</b>
@@ -37,8 +32,18 @@ conference-invitation =
         [null] { "" }
        *[other] (@{ $speaker_username })
     }
+    Лекция: <b>{ $lecture_name }</b>.
+    Начало через: { $time_to_start }
     Длительность: <b>{ $duration } минут</b>
-    Ссылка: <a href={ $link }
+    Ссылка: <a href='{ $link }?token={ $token }'>Перейти к конференции</a>.
+
+conference-speaker =
+    Напоминаем о конференции!
+    Дата: <b>{ $date }</b> в <b>{ $time }</b>
+    Лекция: <b>{ $lecture_name }</b>.
+    Начало через: { $time_to_start }
+    Длительность: <b>{ $duration } минут</b>
+    Ссылка: <a href='{ $link }'>Перейти к конференции</a>.
 
 ### Форматы времени ###
 time-duration =
@@ -48,8 +53,11 @@ time-duration =
         [few] { $days } дня
        *[other] { $days } дней
     } { $hours ->
-        [0] { $minutes } мин
-        [1] 1 час { $minutes } мин
-        [few] { $hours } часа { $minutes } мин
-       *[other] { $hours } часов { $minutes } мин
+        [0] { "" }
+        [1] 1 час
+        [few] { $hours } часа
+       *[other] { $hours } часов
+    } { $minutes ->
+        [0] { "" }
+       *[other] { $minutes } мин
     }

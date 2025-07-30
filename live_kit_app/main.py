@@ -5,8 +5,7 @@ Main module for LiveKit App
 from datetime import datetime, timezone
 
 import httpx
-from fastapi import (BackgroundTasks, FastAPI, Header, HTTPException, Request,
-                     status)
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from livekit.api import WebhookEvent
