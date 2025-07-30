@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
 from api_app.core.taskiq_broker import broker, redis_source
-from api_app.routers import users, lectures, conference
+from api_app.routers import conference, lectures, users
 
 
 @asynccontextmanager

@@ -4,7 +4,7 @@ Settings for the API application.
 
 from enum import Enum
 
-from pydantic import BaseModel, AmqpDsn, Field, Extra
+from pydantic import AmqpDsn, BaseModel, Extra, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,7 +54,6 @@ class RabbitMQSettings(BaseSettings):
     password: str = Field("guest", alias="RABBITMQ_PASSWORD")
     host: str = Field("localhost", alias="RABBITMQ_HOST")
 
-
     @property
     def url(self):
         return f"amqp://{self.user}:{self.password}@{self.host}:5672"
@@ -78,6 +77,7 @@ class Settings(BaseSettings):
     conference: ConferenceSettings = ConferenceSettings()
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
     tg: TGSettings = TGSettings()
+    default_language_code: str = "en"
 
 
 settings = Settings()

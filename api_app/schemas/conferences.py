@@ -4,7 +4,8 @@ Schemas for the Google Services application.
 
 import uuid
 from datetime import datetime
-from typing import Optional, Annotated
+from typing import Annotated, Optional
+
 from pydantic import BaseModel, Field
 
 # Models for conference management

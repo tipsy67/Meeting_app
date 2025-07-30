@@ -2,15 +2,13 @@
 Module for managing LiveKit conference operations.
 """
 
-from api_app.schemas.conferences import (
-    ConferenceCreateModel,
-    ConferenceModel,
-    ConferenceOutputModel,
-    ConferenceParticipantCreate,
-    ConferenceParticipant,
-)
-from api_app.schemas.errors import ErrorResponseModel
 from api_app.datebases import conference_requests as db_requests
+from api_app.schemas.conferences import (ConferenceCreateModel,
+                                         ConferenceModel,
+                                         ConferenceOutputModel,
+                                         ConferenceParticipant,
+                                         ConferenceParticipantCreate)
+from api_app.schemas.errors import ErrorResponseModel
 from api_app.settings import LIVEKIT_BACKEND
 
 

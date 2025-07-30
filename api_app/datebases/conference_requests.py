@@ -2,15 +2,11 @@
 Module for requesting to MongoDB for conference data
 """
 
-from api_app.schemas.conferences import (
-    ConferenceModel,
-    ConferenceOutputModel,
-    YoutubeStreamModel,
-    RecordingModel,
-)
-from api_app.schemas.errors import ErrorResponseModel
 from api_app.datebases import config_base as db
-
+from api_app.schemas.conferences import (ConferenceModel,
+                                         ConferenceOutputModel, RecordingModel,
+                                         YoutubeStreamModel)
+from api_app.schemas.errors import ErrorResponseModel
 from google_services.youtube_api_utils import create_stream_async
 
 # Collections
