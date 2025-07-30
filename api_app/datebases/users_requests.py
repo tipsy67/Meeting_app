@@ -10,9 +10,9 @@ from starlette import status
 from api_app.datebases import config_base as db
 from api_app.schemas.users import (
     UserCreateUpdate,
-    UserResponse, SpeakerListenerResponse,
+    UserResponse,
+    SpeakerListenerResponse,
 )
-
 
 
 async def get_user(tg_user_id: int) -> UserResponse:
@@ -132,6 +132,7 @@ async def get_listeners(speaker_id: int):
 
     return {"listeners": listeners}
 
+
 async def add_listener_to_speaker(data):
     now = datetime.now()
     link = await db.speaker_listener_collection.find_one_and_update(
@@ -149,6 +150,7 @@ async def add_listener_to_speaker(data):
 
     return SpeakerListenerResponse(**link)
 
+
 async def delete_listener_from_speaker(listener_id: int, speaker_id: int):
     result = await db.speaker_listener_collection.find_one_and_delete(
         {"speaker_id": speaker_id, "listener_id": listener_id},
@@ -156,6 +158,7 @@ async def delete_listener_from_speaker(listener_id: int, speaker_id: int):
     )
 
     return {"deleted": result}
+
 
 async def get_all_lectures(speaker_id: int):
     pipeline = [
@@ -174,15 +177,15 @@ async def get_all_lectures(speaker_id: int):
 
     return {"lectures": lectures}
 
-async def get_listeners_ids_from_lecture(speaker_id: int, name: str)->dict:
+
+async def get_listeners_ids_from_lecture(speaker_id: int, name: str) -> dict:
     lecture = await db.lecture_collection.find_one(
-        {"speaker_id": speaker_id, "lecture_name": name},
-        {"listeners": 1}
+        {"speaker_id": speaker_id, "lecture_name": name}, {"listeners": 1}
     )
     return {"listeners": lecture.get("listeners", []) if lecture else []}
 
 
-async def get_listeners_from_lecture(speaker_id: int, name: str)->dict:
+async def get_listeners_from_lecture(speaker_id: int, name: str) -> dict:
     pipeline = [
         {"$match": {"speaker_id": speaker_id, "lecture_name": name}},
         {"$unwind": "$listeners"},

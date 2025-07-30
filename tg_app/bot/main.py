@@ -14,7 +14,7 @@ from handlers.user import user
 async def main():
     bot = Bot(token=os.environ.get("TG_TOKEN"))
     dp = Dispatcher()
-    dp.update.middleware(FluentL10nMiddleware('locales'))
+    dp.update.middleware(FluentL10nMiddleware("locales"))
     dp.include_routers(
         user,
     )
@@ -25,9 +25,10 @@ async def main():
 async def startup():
     pass
 
-if __name__ == '__main__':
-    print('Bot starting...')
+
+if __name__ == "__main__":
+    print("Bot starting...")
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print('Bot canceled.')
+        print("Bot canceled.")

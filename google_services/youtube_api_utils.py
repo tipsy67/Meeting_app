@@ -1,14 +1,13 @@
 """
 Module for working with Youtube API
 """
+
 import datetime
 from google_services.api_access import get_access_token
 import httpx
 
 
-async def create_stream_async(
-        title: str
-) -> dict | None:
+async def create_stream_async(title: str) -> dict | None:
     """
     Create stream
     Need response fields:
@@ -19,23 +18,13 @@ async def create_stream_async(
         access_token = get_access_token()
     except Exception as e:
         print(f"Error with access_token at create_stream: {e}")
-    params = {
-        "part": "id, snippet, cdn, contentDetails, status"
-    }
+    params = {"part": "id, snippet, cdn, contentDetails, status"}
     data = {
-        "snippet": {
-            "title": title
-        },
-        "cdn": {
-            "frameRate": "30fps",
-            "ingestionType": "rtmp",
-            "resolution": "720p"
-        }
+        "snippet": {"title": title},
+        "cdn": {"frameRate": "30fps", "ingestionType": "rtmp", "resolution": "720p"},
     }
 
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     async with httpx.AsyncClient() as client:
         try:
@@ -56,10 +45,7 @@ async def create_stream_async(
 
 
 async def create_broadcast_async(
-        title: str,
-        start_datetime: datetime,
-        end_datetime: datetime,
-        stream_id: str
+    title: str, start_datetime: datetime, end_datetime: datetime, stream_id: str
 ) -> str | None:
     """
     Create broadcast
@@ -71,9 +57,7 @@ async def create_broadcast_async(
         access_token = get_access_token()
     except Exception as e:
         print(f"Error with access_token at create_broadcast: {e}")
-    params = {
-        "part": "snippet, contentDetails, status"
-    }
+    params = {"part": "snippet, contentDetails, status"}
     data = {
         "snippet": {
             "title": title,
@@ -84,9 +68,7 @@ async def create_broadcast_async(
         "contentDetails": {"enableAutoStart": True, "enableAutoStop": True},
     }
 
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     async with httpx.AsyncClient() as client:
         try:
@@ -101,7 +83,7 @@ async def create_broadcast_async(
                 params = {
                     "part": "id, snippet, status, contentDetails",
                     "id": broadcast_data["id"],
-                    "streamId": stream_id
+                    "streamId": stream_id,
                 }
                 headers = {"Authorization": f"Bearer {access_token}"}
                 response = await client.post(

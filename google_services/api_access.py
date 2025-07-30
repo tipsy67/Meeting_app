@@ -14,11 +14,12 @@ SCOPES = [
     "https://www.googleapis.com/auth/calendar.events",
     "https://www.googleapis.com/auth/calendar.app.created",
     "https://www.googleapis.com/auth/calendar.events.owned",
-    ]
+]
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 CRED_PATH = os.path.join(CURRENT_DIR, "credentials", "credentials.json")
 SECRET_FILE_PATH = os.path.join(CURRENT_DIR, "credentials", "secret_file.json")
+
 
 def get_access_token():
     """
@@ -30,9 +31,7 @@ def get_access_token():
     # created automatically when the authorization flow completes for the first
     # time.
     if os.path.exists(CRED_PATH):
-        creds = Credentials.from_authorized_user_file(
-            CRED_PATH,
-            SCOPES)
+        creds = Credentials.from_authorized_user_file(CRED_PATH, SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -51,8 +50,7 @@ def get_access_token():
                 print(f"Error to flow: {e}")
                 return
         # Save the credentials for the next run
-        with open(CRED_PATH, "w",
-                  encoding="utf-8") as token:
+        with open(CRED_PATH, "w", encoding="utf-8") as token:
             token.write(creds.to_json())
     if creds and isinstance(creds, Credentials):
         access_token = creds.token

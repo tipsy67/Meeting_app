@@ -14,27 +14,27 @@ class FluentL10nMiddleware(BaseMiddleware):
         abs_locales_dir = os.path.join(base_dir, locales_dir)
         self.loader = FluentResourceLoader(f"{abs_locales_dir}/{{locale}}")
         self.l10ns = {
-            'en': FluentLocalization(['en'], ['messages.ftl'], self.loader),
-            'ru': FluentLocalization(['ru'], ['messages.ftl'], self.loader),
+            "en": FluentLocalization(["en"], ["messages.ftl"], self.loader),
+            "ru": FluentLocalization(["ru"], ["messages.ftl"], self.loader),
         }
-        self.default_locale = 'en'
+        self.default_locale = "en"
         self.supported_locales = set(self.l10ns.keys())
 
     async def __call__(self, handler, event, data):
         user_locale = self.default_locale
 
         user = None
-        if hasattr(event, 'from_user'):
+        if hasattr(event, "from_user"):
             user = event.from_user
-        elif hasattr(event, 'message') and hasattr(event.message, 'from_user'):
+        elif hasattr(event, "message") and hasattr(event.message, "from_user"):
             user = event.message.from_user
-        elif hasattr(event, 'callback_query') and hasattr(
-            event.callback_query, 'from_user'
+        elif hasattr(event, "callback_query") and hasattr(
+            event.callback_query, "from_user"
         ):
             user = event.callback_query.from_user
 
         if user and user.language_code:
-            user_locale = user.language_code.split('-')[0].lower()
+            user_locale = user.language_code.split("-")[0].lower()
 
         data["l10n"] = self.l10ns.get(user_locale, self.l10ns[self.default_locale])
 

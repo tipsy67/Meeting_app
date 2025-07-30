@@ -24,15 +24,15 @@ class Choice(StatesGroup):
 async def start(message: Message, l10n):
     response = await api_requests.set_user(message.from_user)
 
-    err = response.get('error')
+    err = response.get("error")
     if err is not None:
-        await message.answer(f'{err}: {response.get('detail')}')
+        await message.answer(f"{err}: {response.get('detail')}")
         return
 
-    text = response.get('is_blocked')
+    text = response.get("is_blocked")
     if text:
         await message.answer(
-            l10n.format_value('blocked') + f'\n{text}',
+            l10n.format_value("blocked") + f"\n{text}",
             reply_markup=userkb.get_unblock_keyboard(l10n),
         )
         return
@@ -40,6 +40,6 @@ async def start(message: Message, l10n):
     # await message.answer(
     #     l10n.format_value('welcome'), reply_markup=userkb.get_main_keyboard(l10n)
     # )
-    await message.answer( l10n.format_value('welcome'),
-                           reply_markup=userkb.get_web_app())
-
+    await message.answer(
+        l10n.format_value("welcome"), reply_markup=userkb.get_web_app()
+    )
