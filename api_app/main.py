@@ -4,6 +4,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from api_app.core.config import settings
 from api_app.core.taskiq_broker import broker, redis_source
@@ -33,7 +34,8 @@ api_main_app = FastAPI(
 # Настройка CORS
 api_main_app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.api.cors_origins,
+    # allow_origins=settings.api.cors_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,3 +51,5 @@ async def root():
 api_main_app.include_router(users.router)
 api_main_app.include_router(lectures.router)
 api_main_app.include_router(conference.router)
+
+Instrumentator().instrument(api_main_app).expose(api_main_app)
