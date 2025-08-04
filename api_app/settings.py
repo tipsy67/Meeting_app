@@ -27,5 +27,5 @@ GOOGLE_MEET_BACKEND = {
 }
 
 LIVEKIT_BACKEND = {
-    "host": os.getenv("JITSI_HOST", "https://localhost:5173"),
+    "host": os.getenv("JITSI_HOST", "https://ef1419944b0e.ngrok-free.app"),
 }

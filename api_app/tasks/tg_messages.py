@@ -13,10 +13,8 @@ from api_app.schemas.conferences import ConferenceOutputModel
 from api_app.schemas.users import UserResponse
 from api_app.tasks.tg_messages_utils import reference_points
 
-logger = logging.getLogger("taskiq")
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler("taskiq.log")
-logger.addHandler(handler)
 
 
 @broker.task
@@ -74,9 +72,11 @@ async def create_task_for_listeners(
     recipients_info = await get_users(recipients_ids)
     recipients_token = {user.user_id: user.id for user in conference.listeners}
     for timedelta in reference_points.reference_points:
-        target_time = await reference_points.check_target_time(
-            conference.start_datetime, timedelta)
-        if target_time is not None:
+        result = await reference_points.check_target_time(
+            conference.start_datetime, timedelta
+        )
+        if result is not None:
+            target_time, timedelta_new = result
             for recipient in recipients_info:
                 full_message = await l10n.translate(
                     recipient,
@@ -86,7 +86,7 @@ async def create_task_for_listeners(
                     speaker_name=f"{speaker.first_name} {speaker.last_name}",
                     speaker_username=speaker.username,
                     lecture_name=conference.lecture_name,
-                    time_to_start=await l10n.format_time(speaker, timedelta),
+                    time_to_start=await l10n.format_time(speaker, timedelta_new),
                     duration=conference.duration,
                     link=conference.conference_link,
                     token=recipients_token[recipient.id],
@@ -100,18 +100,21 @@ async def create_task_for_speaker(
     conference: ConferenceOutputModel, speaker: UserResponse
 ) -> None:
     for timedelta in reference_points.reference_points:
-        target_time = await reference_points.check_target_time(
-            conference.start_datetime, timedelta)
-        if target_time is not None:
+        result = await reference_points.check_target_time(
+            conference.start_datetime, timedelta
+        )
+        if result is not None:
+            target_time, timedelta_new = result
             full_message = await l10n.translate(
                 speaker,
                 "conference-speaker",
                 date=conference.start_datetime.strftime("%d.%m.%Y"),
                 time=conference.start_datetime.strftime("%H:%M"),
                 lecture_name=conference.lecture_name,
-                time_to_start=await l10n.format_time(speaker, timedelta),
+                time_to_start=await l10n.format_time(speaker, timedelta_new),
                 duration=conference.duration,
                 link=conference.conference_link,
+                token=conference.speaker.id
             )
             await send_individual_message_to_users_task.schedule_by_time(
                 redis_source, target_time, user_id=speaker.id, text=full_message

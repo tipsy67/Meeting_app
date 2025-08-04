@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
+from api_app.core.config import settings
 from api_app.core.taskiq_broker import broker, redis_source
 from api_app.routers import conference, lectures, users
 
@@ -28,18 +29,11 @@ api_main_app = FastAPI(
     lifespan=lifespan,
 )
 
-origins = [
-    "http://localhost",
-    "http://localhost:8000",
-    "http://127.0.0.1",
-    "http://127.0.0.1:8000",
-    "https://2deyhh-37-44-40-134.ru.tuna.am",
-]
 
 # Настройка CORS
 api_main_app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.api.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
