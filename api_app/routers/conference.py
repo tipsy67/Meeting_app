@@ -5,9 +5,10 @@ from fastapi.responses import JSONResponse
 from starlette import status
 
 import api_app.services.conferences as srv
+
 from api_app.conference_backend.conference import create_conference
 from api_app.datebases.conference_requests import get_conference
-from api_app.datebases.users_requests import get_listeners_ids_from_lecture
+from api_app.datebases.users_requests import get_listeners_ids_from_lecture, increment_request_counter
 from api_app.schemas.conferences import ConferenceCreateModel
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.settings import CONFERENCE_BACKEND
@@ -29,6 +30,7 @@ async def create_conference_rt(conference: ConferenceCreateModel):
     conference.listeners = listeners["listeners"]
     conference_output = await create_conference(CONFERENCE_BACKEND, conference)
     await srv.create_conference(conference_output.id)
+    await increment_request_counter(conference.speaker, conference.lecture_name)
 
     return conference_output.model_dump()
 
