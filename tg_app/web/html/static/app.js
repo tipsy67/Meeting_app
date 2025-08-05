@@ -87,6 +87,12 @@ const DOM = {
     backFromMeetingFormBtn: document.getElementById('backFromMeetingFormBtn'),
     currentMeetingLectureTitle: document.getElementById('currentMeetingLectureTitle'),
     lectureDuration: document.getElementById('lectureDuration'),
+    editLectureForm: document.getElementById('editLectureForm'),
+    editLectureTitle: document.getElementById('editLectureTitle'),
+    editLectureNameInput: document.getElementById('editLectureName'),
+    editListenersList: document.getElementById('editListenersList'),
+    saveEditedLectureBtn: document.getElementById('saveEditedLectureBtn'),
+    backFromEditLectureBtn: document.getElementById('backFromEditLectureBtn'),
 };
 
 // Сервис API
@@ -226,6 +232,75 @@ const ListenerManager = {
 
 // Менеджер лекций
 const LectureManager = {
+    currentLectureName: '',
+
+    async prepareEditForm() {
+        const [lectureData, allListeners] = await Promise.all([
+            ApiService.request('get_listeners_from_lecture', {
+                params: {name: this.currentLectureName, speaker_id: userId}
+            }),
+            ApiService.request('get_listeners', {params: {speaker_id: userId}})
+        ]);
+
+        if (!allListeners?.listeners) return;
+
+        const currentListeners = lectureData?.listeners?.map(l => l._id) || [];
+
+        DOM.editListenersList.innerHTML = allListeners.listeners.map(listener => `
+            <div class="list-group-item d-flex align-items-center">
+                <div class="form-check flex-grow-1">
+                    <input class="form-check-input" type="checkbox" 
+                          id="edit-listener-${listener._id}"
+                          ${currentListeners.includes(listener._id) ? 'checked' : ''}>
+                    <label class="form-check-label ms-2" for="edit-listener-${listener._id}">
+                        ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
+                    </label>
+                </div>
+            </div>
+        `).join('');
+
+        DOM.editLectureTitle.textContent = `Редактирование: ${this.currentLectureName}`;
+        DOM.editLectureNameInput.value = this.currentLectureName.replace(`${userId}_`, '');
+    },
+
+    async saveEditedLecture() {
+        const lectureName = DOM.editLectureNameInput.value.trim();
+        if (!lectureName) {
+            tg.showAlert('Введите название лекции!');
+            DOM.editLectureNameInput.classList.add('is-invalid');
+            return;
+        }
+        DOM.editLectureNameInput.classList.remove('is-invalid');
+
+        const selectedListeners = Array.from(
+            document.querySelectorAll('#editListenersList input[type="checkbox"]:checked')
+        ).map(checkbox => parseInt(checkbox.id.replace('edit-listener-', '')));
+
+        const requestData = {
+            name: `${userId}_${lectureName}`,
+            data: selectedListeners.length > 0 ? selectedListeners : [0]
+        };
+
+        const result = await ApiService.request('save_lecture', {
+            method: 'POST',
+            data: requestData
+        });
+
+        if (result) {
+            tg.showAlert('Лекция обновлена!');
+            this.currentLectureName = `${lectureName}`;
+            DOM.currentLectureTitle.textContent = this.currentLectureName;
+            await this.fetchLectures();
+            Navigation.show('editLectureMenu');
+        }
+    },
+
+    async editLectureListeners() {
+        this.currentLectureName = DOM.currentLectureTitle.textContent;
+        Navigation.show('editLectureForm');
+        await this.prepareEditForm();
+    },
+
     async fetchListeners() {
         try {
             const data = await ApiService.request('get_listeners', {
@@ -331,37 +406,6 @@ const LectureManager = {
         }
     },
 
-    async editLectureListeners() {
-        const lectureName = DOM.currentLectureTitle.textContent;
-
-        const [lectureData, allListeners] = await Promise.all([
-            ApiService.request('get_listeners_from_lecture', {
-                params: {name: lectureName, speaker_id: userId}
-            }),
-            ApiService.request('get_listeners', {params: {speaker_id: userId}})
-        ]);
-
-        if (!allListeners?.listeners) return;
-
-        const currentListeners = lectureData?.listeners?.map(l => l._id) || [];
-
-        DOM.listenersList.innerHTML = allListeners.listeners.map(listener => `
-                    <div class="list-group-item d-flex align-items-center">
-                        <div class="form-check flex-grow-1">
-                            <input class="form-check-input" type="checkbox" 
-                                  id="listener-${listener._id}"
-                                  ${currentListeners.includes(listener._id) ? 'checked' : ''}>
-                            <label class="form-check-label ms-2" for="listener-${listener._id}">
-                                ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
-                            </label>
-                        </div>
-                    </div>
-                `).join('');
-
-        DOM.currentEditLectureTitle.textContent = `Редактирование: ${lectureName}`;
-        DOM.lectureNameInput.value = lectureName;
-        Navigation.show('editLectureForm');
-    },
 
     initMeetingForm() {
         const lectureName = DOM.currentLectureTitle.textContent;
@@ -427,7 +471,7 @@ const Navigation = {
             DOM.appMainMenu, DOM.mainMenu, DOM.listenerMenu,
             DOM.joinSpeakerForm, DOM.leaveSpeakerForm,
             DOM.newLectureForm, DOM.lecturesList, DOM.editLectureMenu,
-            DOM.newMeetingForm
+            DOM.newMeetingForm, DOM.editLectureForm
         ].forEach(el => el?.classList.add('hidden'));
 
         const screens = {
@@ -437,21 +481,24 @@ const Navigation = {
             'joinSpeakerForm': DOM.joinSpeakerForm,
             'leaveSpeakerForm': DOM.leaveSpeakerForm,
             'newLectureForm': DOM.newLectureForm,
-            'editLectureForm': DOM.newLectureForm,
             'lecturesList': DOM.lecturesList,
             'editLectureMenu': DOM.editLectureMenu,
             'newMeetingForm': DOM.newMeetingForm,
+            'editLectureForm': DOM.editLectureForm,
         };
 
         if (screens[screen]) {
             screens[screen].classList.remove('hidden');
         }
 
-        // Инициализация экранов
         switch (screen) {
             case 'newLectureForm':
                 DOM.currentEditLectureTitle.textContent = 'Новая лекция';
+                DOM.lectureNameInput.value = '';
                 LectureManager.fetchListeners().catch(console.error);
+                break;
+            case 'editLectureForm':
+                LectureManager.prepareEditForm().catch(console.error);
                 break;
             case 'lecturesList':
                 LectureManager.fetchLectures().catch(console.error);
@@ -506,6 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.deleteLectureBtn?.addEventListener('click', () => LectureManager.deleteLecture().catch(console.error));
     DOM.backFromEditBtn?.addEventListener('click', () => Navigation.show('lecturesList'));
     DOM.editListenersBtn?.addEventListener('click', () => LectureManager.editLectureListeners().catch(console.error));
+    DOM.saveEditedLectureBtn?.addEventListener('click', () => LectureManager.saveEditedLecture().catch(console.error));
+    DOM.backFromEditLectureBtn?.addEventListener('click', () => Navigation.show('editLectureMenu'));
 
     // Встречи
     DOM.newMeetingBtn?.addEventListener('click', () => {

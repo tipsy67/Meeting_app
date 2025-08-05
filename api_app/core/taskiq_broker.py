@@ -13,7 +13,9 @@ result_backend = RedisAsyncResultBackend(
 
 broker = RedisStreamBroker(
     url="redis://localhost:6379",
-).with_result_backend(result_backend).with_middlewares(
+).with_result_backend(
+    result_backend
+).with_middlewares(
     PrometheusMiddleware(server_addr="0.0.0.0", server_port=9000),
 )
 
