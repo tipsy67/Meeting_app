@@ -253,3 +253,25 @@ async def save_lecture(data):
     )
 
     return lecture
+
+async def increment_request_counter(speaker_id: int, lecture_name:str):
+    now = datetime.now()
+
+    lecture = await db.lecture_collection.find_one_and_update(
+        {"speaker_id": speaker_id, "lecture_name": lecture_name},
+        {
+            "$set": {
+                "updated_at": now,
+            },
+            "$inc": {
+                "request_counter": 1
+            }
+        },
+        projection={"_id": False},
+        return_document=ReturnDocument.AFTER,
+    )
+
+    if not lecture:
+        raise ValueError("Lecture not found")
+
+    return lecture

@@ -1,7 +1,7 @@
 __all__ = ("broker", "redis_source", "scheduler")
 
 import taskiq_fastapi
-from taskiq import TaskiqScheduler
+from taskiq import TaskiqScheduler, PrometheusMiddleware
 from taskiq_redis import RedisAsyncResultBackend, RedisScheduleSource, RedisStreamBroker
 
 # broker = AioPikaBroker(url=settings.rabbitmq.url)
@@ -13,7 +13,11 @@ result_backend = RedisAsyncResultBackend(
 
 broker = RedisStreamBroker(
     url="redis://localhost:6379",
-).with_result_backend(result_backend)
+).with_result_backend(
+    result_backend
+).with_middlewares(
+    PrometheusMiddleware(server_addr="0.0.0.0", server_port=9000),
+)
 
 redis_source = RedisScheduleSource("redis://localhost:6379/0")
 scheduler = TaskiqScheduler(broker, sources=[redis_source])

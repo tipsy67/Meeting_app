@@ -43,7 +43,7 @@ conference-speaker =
     Лекция: <b>{ $lecture_name }</b>.
     Начало через: { $time_to_start }
     Длительность: <b>{ $duration } минут</b>
-    Ссылка: <a href='{ $link }'>Перейти к конференции</a>.
+    Ссылка: <a href='{ $link }?token={ $token }'>Перейти к конференции</a>.
 
 ### Форматы времени ###
 time-duration =

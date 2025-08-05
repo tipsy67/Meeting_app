@@ -3,10 +3,13 @@ Settings for the API application.
 """
 
 from enum import Enum
+from pathlib import Path
+from typing import List
 
 from pydantic import AmqpDsn, BaseModel, Extra, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 class ConferenceBackends(str, Enum):
     LIVEKIT = "livekit"
@@ -63,13 +66,17 @@ class TGSettings(BaseModel):
     token: str = ""
 
 
+class APISettings(BaseModel):
+    cors_origins: List[str] = ["*"]
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(
-            "api_app/.env",
-            "api_app/.env.dan",
+            BASE_DIR / ".env",
+            BASE_DIR / ".env.dan",
             # "api_app/.env.production",
-        ),  # todo: убрать прямой путь и сделать относительный путь
+        ),
         case_sensitive=False,
         env_nested_delimiter="__",
         extra="ignore",
@@ -77,9 +84,11 @@ class Settings(BaseSettings):
     conference: ConferenceSettings = ConferenceSettings()
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
     tg: TGSettings = TGSettings()
+    api: APISettings = APISettings()
     default_language_code: str = "en"
 
 
 settings = Settings()
+# print(BASE_DIR)
 # print(settings.model_dump())
 # print(settings.rabbitmq.url)

@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "api-app"
+    static_configs:
+      - targets: ["172.17.0.1:8000"]
+
+  - job_name: "taskiq"
+    static_configs:
+      - targets: [ "172.17.0.1:9000" ]

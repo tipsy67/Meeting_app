@@ -43,7 +43,7 @@ conference-speaker =
     Lecture: <b>{ $lecture_name }</b>.
     Starts in: { $time_to_start }
     Duration: <b>{ $duration } minutes</b>
-    Link: <a href='{ $link }'>Click to begin</a>.
+    Link: <a href='{ $link }?token={ $token }'>Click to begin</a>.
 
 ### Time formats ###
 time-duration =
