@@ -89,6 +89,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print(BASE_DIR)
-print(settings.model_dump())
+# print(BASE_DIR)
+# print(settings.model_dump())
 # print(settings.rabbitmq.url)
