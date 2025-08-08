@@ -169,7 +169,7 @@ async def get_all_lectures(speaker_id: int):
                 "update_at": 1,
             },
         },
-        {"$sort": {"update_at": -1}},
+        {"$sort": {"update_at": 1}},
     ]
     lectures_cursor = await db.lecture_collection.aggregate(pipeline)
     lectures = await lectures_cursor.to_list(length=None)

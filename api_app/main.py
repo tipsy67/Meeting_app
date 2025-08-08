@@ -8,7 +8,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from api_app.core.config import settings
 from api_app.core.taskiq_broker import broker, redis_source
-from api_app.routers import conference, lectures, users
+from api_app.routers import conference, lectures, users, auth
 
 
 @asynccontextmanager
@@ -51,5 +51,6 @@ async def root():
 api_main_app.include_router(users.router)
 api_main_app.include_router(lectures.router)
 api_main_app.include_router(conference.router)
+api_main_app.include_router(auth.router)
 
 Instrumentator().instrument(api_main_app).expose(api_main_app)

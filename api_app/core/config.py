@@ -69,6 +69,12 @@ class TGSettings(BaseModel):
 class APISettings(BaseModel):
     cors_origins: List[str] = ["*"]
 
+class AuthJWT(BaseModel):
+    private_key_path: Path = BASE_DIR / "certs" / "jwt-private.pem"
+    public_key_path: Path = BASE_DIR / "certs" / "jwt-public.pem"
+    algorithm: str = "RS256"
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 30
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -86,6 +92,7 @@ class Settings(BaseSettings):
     tg: TGSettings = TGSettings()
     api: APISettings = APISettings()
     default_language_code: str = "en"
+    auth_jwt: AuthJWT = AuthJWT()
 
 
 settings = Settings()
