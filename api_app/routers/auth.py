@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi.params import Depends
 
+from api_app.auth.jwt import get_user_from_refresh_token
 from api_app.auth.jwt_utils import create_access_token, create_refresh_token
 from api_app.auth.telegram import TelegramAuth
 from api_app.schemas.auth import TokenInfo
@@ -19,7 +20,7 @@ async def login(tg_user: UserCreateUpdate = Depends(TelegramAuth())):
     )
 
 @router.post("/refresh", response_model=TokenInfo, response_model_exclude_none=True)
-async def refresh(tg_user: UserCreateUpdate = Depends(get_user_from_refresh)):
+async def refresh(tg_user: UserCreateUpdate = Depends(get_user_from_refresh_token)):
     access_token = create_access_token(tg_user)
     return TokenInfo(
         access_token=access_token,

@@ -4,11 +4,23 @@ import jwt
 from datetime import timedelta, datetime, timezone
 
 from api_app.core.config import settings
-from api_app.schemas.users import UserCreateUpdate
+from api_app.schemas.users import UserCreateUpdate, UserResponse
 
 TOKEN_TYPE_FIELD = "type"
 ACCESS_TOKEN_TYPE = "access"
 REFRESH_TOKEN_TYPE = "refresh"
+
+def decode_jwt(
+    token: str | bytes,
+    public_key: str = settings.auth_jwt.public_key_path.read_text(),
+    algorithm: str = settings.auth_jwt.algorithm,
+) -> dict:
+    decoded = jwt.decode(
+        token,
+        public_key,
+        algorithms=[algorithm],
+    )
+    return decoded
 
 def encode_jwt(
     payload: dict,
@@ -50,12 +62,14 @@ def create_jwt(
     )
 
 
-def create_access_token(user: UserCreateUpdate) -> str:
+def create_access_token(user: UserResponse) -> str:
     jwt_payload = {
         # subject
-        "sub": user.username,
+        "sub": user.id,
         "username": user.username,
-        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "language_code": user.language_code,
         # "logged_in_at"
     }
     return create_jwt(
@@ -65,10 +79,9 @@ def create_access_token(user: UserCreateUpdate) -> str:
     )
 
 
-def create_refresh_token(user: UserCreateUpdate) -> str:
+def create_refresh_token(user: UserResponse) -> str:
     jwt_payload = {
-        "sub": user.username,
-        # "username": user.username,
+        "sub": user.id,
     }
     return create_jwt(
         token_type=REFRESH_TOKEN_TYPE,

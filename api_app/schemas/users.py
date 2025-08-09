@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from bson import ObjectId
-from pydantic import BaseModel, Field, field_validator, validator
+from pydantic import BaseModel, Field, field_validator, validator, ConfigDict
 from typing_extensions import Optional
 
 from api_app.core.config import settings
@@ -13,6 +13,7 @@ class UserCreateUpdate(BaseModel):
     first_name: str
     last_name: Optional[str] = None
     language_code: Optional[str] = settings.default_language_code
+    model_config = ConfigDict(extra="ignore")
 
 
 class UserResponse(UserCreateUpdate):

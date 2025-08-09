@@ -1,22 +1,10 @@
-// Telegram WebApp Mock и инициализация
-const initTelegramWebApp = () => {
-    if (!window.Telegram?.WebApp) {
-        console.warn("Telegram WebApp not detected! Running in debug mode");
-        window.Telegram = {
-            WebApp: {
-                initDataUnsafe: {user: {id: Math.floor(Math.random() * 10000)}},
-                expand: () => console.debug("Telegram.WebApp.expand()"),
-                showAlert: (msg) => console.warn(`ALERT: ${msg}`)
-            }
-        };
-    }
-    return window.Telegram.WebApp;
-};
-
 // Конфигурация API
 const API_CONFIG = {
-    BASE_URL: 'https://dky2xo-37-44-40-134.ru.tuna.am',
+    BASE_URL: 'https://wu9cme-37-44-40-134.ru.tuna.am',
     ENDPOINTS: {
+        login: '/auth/login',  
+        refresh: '/auth/refresh',
+        
         set_user: '/users',
         get_speakers: '/users/speakers',
         add_to_speaker: '/users/speakers/listeners',
@@ -34,16 +22,227 @@ const API_CONFIG = {
         create_meeting: '/conferences/new'
     },
     getUrl(endpoint) {
+        if (!this.ENDPOINTS[endpoint]) {
+            throw new Error(`Unknown endpoint: ${endpoint}`);
+        }
         return `${this.BASE_URL}${this.ENDPOINTS[endpoint]}`;
+    }
+};
+
+// Инициализация Telegram WebApp
+const initTelegramWebApp = () => {
+    if (!window.Telegram?.WebApp) {
+        console.warn("Telegram WebApp not detected! Running in debug mode");
+        window.Telegram = {
+            WebApp: {
+                initData: '',
+                expand: () => console.debug("Telegram.WebApp.expand()"),
+                showAlert: (msg) => alert(`ALERT: ${msg}`),
+                ready: (callback) => callback(),
+                close: () => console.debug("WebApp closed"),
+                isExpanded: true,
+                colorScheme: 'light',
+                version: '6.0',
+                platform: 'unknown'
+            }
+        };
+    }
+    return window.Telegram.WebApp;
+};
+
+// Получение пользовательских данных
+const getTelegramUserData = (webApp) => {
+    if (!webApp?.initData) return null;
+    
+    try {
+        const params = new URLSearchParams(webApp.initData);
+        const userParam = params.get('user');
+        return userParam ? JSON.parse(decodeURIComponent(userParam)) : null;
+    } catch (e) {
+        console.error("Error parsing user data:", e);
+        return null;
     }
 };
 
 // Инициализация приложения
 const tg = initTelegramWebApp();
-tg.expand();
-const userId = tg.initDataUnsafe.user?.id;
+const userData = getTelegramUserData(tg);
+const userId = userData?.id || null;
 
-// Кэш элементов DOM
+// JWT сервис
+const JwtService = {
+    accessToken: localStorage.getItem('accessToken') || null,
+    refreshToken: localStorage.getItem('refreshToken') || null,
+
+    setTokens({ access, refresh }) {
+        this.accessToken = access;
+        this.refreshToken = refresh;
+        localStorage.setItem('accessToken', access);
+        localStorage.setItem('refreshToken', refresh);
+        console.log('Tokens updated');  // Логирование
+    },
+
+    clearTokens() {
+        this.accessToken = null;
+        this.refreshToken = null;
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        console.log('Tokens cleared');  // Логирование
+    },
+
+    getAuthHeader() {
+        return this.accessToken ? {
+            'Authorization': `Bearer ${this.accessToken}`
+        } : {};
+    },
+
+    async refresh() {
+        if (!this.refreshToken) {
+            console.log('No refresh token available');
+            this.clearTokens();
+            return false;
+        }
+
+        try {
+            console.log('Attempting token refresh');
+            const response = await fetch(API_CONFIG.getUrl('refresh'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.refreshToken}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.setTokens(data);
+                console.log('Token refresh successful');
+                return true;
+            }
+
+            console.log('Token refresh failed with status:', response.status);
+            this.clearTokens();
+            return false;
+        } catch (error) {
+            console.error('Refresh token failed:', error);
+            this.clearTokens();
+            return false;
+        }
+    }
+};
+// Auth сервис
+const AuthService = {
+    async login() {
+        try {
+            if (!tg.initData) return false;
+
+            const response = await fetch(API_CONFIG.getUrl('login'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData: tg.initData })
+            });
+
+            if (response.ok) {
+                const tokens = await response.json();
+                JwtService.setTokens(tokens);
+                return true;
+            }
+        } catch (error) {
+            console.error('Authentication failed:', error);
+        }
+        return false;
+    },
+
+    logout() {
+        JwtService.clearTokens();
+    },
+
+    isAuthenticated() {
+        return !!JwtService.accessToken;
+    },
+
+    async ensureAuth() {
+        if (this.isAuthenticated()) return true;
+        return await this.login();
+    }
+};
+
+// Сервис API
+const ApiService = {
+    async request(endpoint, { method = 'GET', params = {}, data } = {}) {
+        // Для эндпоинтов login и refresh не проверяем авторизацию
+        if (!['login', 'refresh'].includes(endpoint)) {
+            // Проверяем наличие токена
+            if (!JwtService.accessToken) {
+                console.log('No access token, attempting login');
+                if (!await AuthService.login()) {
+                    throw new Error('Authentication required');
+                }
+            }
+        }
+
+        const url = new URL(API_CONFIG.getUrl(endpoint));
+        Object.entries(params).forEach(([key, value]) => {
+            url.searchParams.append(key, String(value));
+        });
+
+        try {
+            console.log(`Making request to ${endpoint}`);
+            let response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...JwtService.getAuthHeader()
+                },
+                body: data ? JSON.stringify(data) : undefined
+            });
+
+            // Если 401 - пробуем обновить токен только один раз
+            if (response.status === 401) {
+                console.log('Received 401, attempting token refresh');
+                if (await JwtService.refresh()) {
+                    console.log('Retrying request with new token');
+                    response = await fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...JwtService.getAuthHeader()
+                        },
+                        body: data ? JSON.stringify(data) : undefined
+                    });
+                } else {
+                    throw new Error('Session expired');
+                }
+            }
+
+            if (!response.ok) {
+                throw await this.parseError(response);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error(`API request to ${endpoint} failed:`, error);
+            this.handleError(error);
+            throw error;
+        }
+    },
+    async parseError(response) {
+        try {
+            const errorData = await response.json();
+            return new Error(errorData.message || `HTTP ${response.status}`);
+        } catch {
+            return new Error(await response.text() || 'Unknown error');
+        }
+    },
+
+    handleError(error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('API Error:', error);
+        tg.showAlert(`Ошибка: ${message}`);
+    }
+};
+
+// DOM элементы
 const DOM = {
     appMainMenu: document.getElementById('appMainMenu'),
     speakerPanelBtn: document.getElementById('speakerPanelBtn'),
@@ -95,47 +294,7 @@ const DOM = {
     backFromEditLectureBtn: document.getElementById('backFromEditLectureBtn'),
 };
 
-// Сервис API
-const ApiService = {
-    async request(endpoint, {method = 'GET', params = {}, data} = {}) {
-        try {
-            const url = new URL(API_CONFIG.getUrl(endpoint));
-            Object.entries(params).forEach(([key, value]) => {
-                url.searchParams.append(key, String(value));
-            });
-
-            const response = await fetch(url, {
-                method,
-                headers: {'Content-Type': 'application/json'},
-                body: data ? JSON.stringify(data) : undefined
-            });
-
-            if (!response.ok) {
-                return this.handleError(await this.parseError(response));
-            }
-            return await response.json();
-        } catch (error) {
-            this.handleError(error);
-            return null;
-        }
-    },
-
-    async parseError(response) {
-        try {
-            const errorData = await response.json();
-            return new Error(errorData.message || `HTTP ${response.status}`);
-        } catch {
-            return new Error(await response.text() || 'Unknown error');
-        }
-    },
-
-    handleError(error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error('API Error:', error);
-        tg.showAlert(`Ошибка: ${errorMessage}`);
-    }
-};
-
+// Менеджер слушателей
 const ListenerManager = {
     async fetchSpeakers() {
         try {
@@ -151,22 +310,23 @@ const ListenerManager = {
             DOM.speakersList.innerHTML = speakersData.speakers.map(speaker => {
                 const isSelected = selectedSpeakerIds.includes(speaker._id);
                 return `
-                            <div class="list-group-item d-flex align-items-center">
-                                <div class="form-check flex-grow-1">
-                                    <input class="form-check-input" type="radio" name="speaker" 
-                                          id="speaker-${speaker._id}" value="${speaker._id}"
-                                          ${isSelected ? 'disabled' : ''}>
-                                    <label class="form-check-label ms-2" for="speaker-${speaker._id}" 
-                                          ${isSelected ? 'style="opacity: 0.5;"' : ''}>
-                                        ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
-                                        ${isSelected ? ' ✅' : ''}
-                                    </label>
-                                </div>
-                            </div>
-                        `;
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="form-check flex-grow-1">
+                            <input class="form-check-input" type="radio" name="speaker" 
+                                  id="speaker-${speaker._id}" value="${speaker._id}"
+                                  ${isSelected ? 'disabled' : ''}>
+                            <label class="form-check-label ms-2" for="speaker-${speaker._id}" 
+                                  ${isSelected ? 'style="opacity: 0.5;"' : ''}>
+                                ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
+                                ${isSelected ? ' ✅' : ''}
+                            </label>
+                        </div>
+                    </div>
+                `;
             }).join('');
         } catch (error) {
             console.error('Failed to fetch speakers:', error);
+            tg.showAlert('Ошибка загрузки списка лекторов');
         }
     },
 
@@ -178,54 +338,68 @@ const ListenerManager = {
             if (!data?.speakers) return;
 
             DOM.speakersToLeaveList.innerHTML = data.speakers.map(speaker => `
-                        <div class="list-group-item d-flex align-items-center">
-                            <div class="form-check flex-grow-1">
-                                <input class="form-check-input" type="radio" 
-                                       name="speaker" 
-                                       id="speaker-${speaker._id}" 
-                                       value="${speaker._id}">
-                                <label class="form-check-label ms-2" for="speaker-${speaker._id}">
-                                    ${speaker.username || 'No username'} 
-                                    (${speaker.full_name || 'No name'})
-                                </label>
-                            </div>
-                        </div>
-                    `).join('');
+                <div class="list-group-item d-flex align-items-center">
+                    <div class="form-check flex-grow-1">
+                        <input class="form-check-input" type="radio" 
+                               name="speaker" 
+                               id="speaker-${speaker._id}" 
+                               value="${speaker._id}">
+                        <label class="form-check-label ms-2" for="speaker-${speaker._id}">
+                            ${speaker.username || 'No username'} 
+                            (${speaker.full_name || 'No name'})
+                        </label>
+                    </div>
+                </div>
+            `).join('');
         } catch (error) {
             console.error('Failed to fetch listener lectures:', error);
+            tg.showAlert('Ошибка загрузки ваших лекторов');
         }
     },
 
     async joinSpeaker() {
-        const selectedSpeaker = document.querySelector('#speakersList input[name="speaker"]:checked');
-        if (!selectedSpeaker) {
-            tg.showAlert('Выберите лектора!');
-            return;
-        }
+        try {
+            const selectedSpeaker = document.querySelector('#speakersList input[name="speaker"]:checked');
+            if (!selectedSpeaker) {
+                tg.showAlert('Выберите лектора!');
+                return;
+            }
 
-        const result = await ApiService.request('add_to_speaker', {
-            method: 'POST',
-            data: {listener_id: userId, speaker_id: selectedSpeaker.value}
-        });
-        if (result) {
-            tg.showAlert('Вы успешно добавились к лектору!');
-            Navigation.show('listenerMenu');
+            const result = await ApiService.request('add_to_speaker', {
+                method: 'POST',
+                data: {listener_id: userId, speaker_id: selectedSpeaker.value}
+            });
+
+            if (result) {
+                tg.showAlert('Вы успешно добавились к лектору!');
+                Navigation.show('listenerMenu');
+            }
+        } catch (error) {
+            console.error('Join speaker error:', error);
+            tg.showAlert('Ошибка добавления к лектору');
         }
     },
 
     async leaveSpeaker() {
-        const selectedLecture = document.querySelector('#speakersToLeaveList input[name="speaker"]:checked');
-        if (!selectedLecture) {
-            tg.showAlert('Выберите лектора!');
-            return;
-        }
-        const result = await ApiService.request('remove_from_all_lectures', {
-            method: 'DELETE',
-            params: {listener_id: userId, speaker_id: selectedLecture.value}
-        });
-        if (result) {
-            tg.showAlert('Вы успешно отписались от лектора!');
-            Navigation.show('listenerMenu');
+        try {
+            const selectedSpeaker = document.querySelector('#speakersToLeaveList input[name="speaker"]:checked');
+            if (!selectedSpeaker) {
+                tg.showAlert('Выберите лектора!');
+                return;
+            }
+
+            const result = await ApiService.request('remove_from_all_lectures', {
+                method: 'DELETE',
+                params: {listener_id: userId, speaker_id: selectedSpeaker.value}
+            });
+
+            if (result) {
+                tg.showAlert('Вы успешно отписались от лектора!');
+                Navigation.show('listenerMenu');
+            }
+        } catch (error) {
+            console.error('Leave speaker error:', error);
+            tg.showAlert('Ошибка отписки от лектора');
         }
     }
 };
@@ -235,70 +409,72 @@ const LectureManager = {
     currentLectureName: '',
 
     async prepareEditForm() {
-        const [lectureData, allListeners] = await Promise.all([
-            ApiService.request('get_listeners_from_lecture', {
-                params: {name: this.currentLectureName, speaker_id: userId}
-            }),
-            ApiService.request('get_listeners', {params: {speaker_id: userId}})
-        ]);
+        try {
+            const [lectureData, allListeners] = await Promise.all([
+                ApiService.request('get_listeners_from_lecture', {
+                    params: {name: this.currentLectureName, speaker_id: userId}
+                }),
+                ApiService.request('get_listeners', {params: {speaker_id: userId}})
+            ]);
 
-        if (!allListeners?.listeners) return;
+            if (!allListeners?.listeners) return;
 
-        const currentListeners = lectureData?.listeners?.map(l => l._id) || [];
+            const currentListeners = lectureData?.listeners?.map(l => l._id) || [];
 
-        DOM.editListenersList.innerHTML = allListeners.listeners.map(listener => `
-            <div class="list-group-item d-flex align-items-center">
-                <div class="form-check flex-grow-1">
-                    <input class="form-check-input" type="checkbox" 
-                          id="edit-listener-${listener._id}"
-                          ${currentListeners.includes(listener._id) ? 'checked' : ''}>
-                    <label class="form-check-label ms-2" for="edit-listener-${listener._id}">
-                        ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
-                    </label>
+            DOM.editListenersList.innerHTML = allListeners.listeners.map(listener => `
+                <div class="list-group-item d-flex align-items-center">
+                    <div class="form-check flex-grow-1">
+                        <input class="form-check-input" type="checkbox" 
+                              id="edit-listener-${listener._id}"
+                              ${currentListeners.includes(listener._id) ? 'checked' : ''}>
+                        <label class="form-check-label ms-2" for="edit-listener-${listener._id}">
+                            ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
+                        </label>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
 
-        DOM.editLectureTitle.textContent = `Редактирование: ${this.currentLectureName}`;
-        DOM.editLectureNameInput.value = this.currentLectureName.replace(`${userId}_`, '');
+            DOM.editLectureTitle.textContent = `Редактирование: ${this.currentLectureName}`;
+            DOM.editLectureNameInput.value = this.currentLectureName.replace(`${userId}_`, '');
+        } catch (error) {
+            console.error('Prepare edit form error:', error);
+            tg.showAlert('Ошибка подготовки формы редактирования');
+        }
     },
 
     async saveEditedLecture() {
-        const lectureName = DOM.editLectureNameInput.value.trim();
-        if (!lectureName) {
-            tg.showAlert('Введите название лекции!');
-            DOM.editLectureNameInput.classList.add('is-invalid');
-            return;
+        try {
+            const lectureName = DOM.editLectureNameInput.value.trim();
+            if (!lectureName) {
+                tg.showAlert('Введите название лекции!');
+                DOM.editLectureNameInput.classList.add('is-invalid');
+                return;
+            }
+            DOM.editLectureNameInput.classList.remove('is-invalid');
+
+            const selectedListeners = Array.from(
+                document.querySelectorAll('#editListenersList input[type="checkbox"]:checked')
+            ).map(checkbox => parseInt(checkbox.id.replace('edit-listener-', '')));
+
+            const result = await ApiService.request('save_lecture', {
+                method: 'POST',
+                data: {
+                    name: `${userId}_${lectureName}`,
+                    data: selectedListeners.length > 0 ? selectedListeners : [0]
+                }
+            });
+
+            if (result) {
+                tg.showAlert('Лекция обновлена!');
+                this.currentLectureName = `${lectureName}`;
+                DOM.currentLectureTitle.textContent = this.currentLectureName;
+                await this.fetchLectures();
+                Navigation.show('editLectureMenu');
+            }
+        } catch (error) {
+            console.error('Save edited lecture error:', error);
+            tg.showAlert('Ошибка сохранения лекции');
         }
-        DOM.editLectureNameInput.classList.remove('is-invalid');
-
-        const selectedListeners = Array.from(
-            document.querySelectorAll('#editListenersList input[type="checkbox"]:checked')
-        ).map(checkbox => parseInt(checkbox.id.replace('edit-listener-', '')));
-
-        const requestData = {
-            name: `${userId}_${lectureName}`,
-            data: selectedListeners.length > 0 ? selectedListeners : [0]
-        };
-
-        const result = await ApiService.request('save_lecture', {
-            method: 'POST',
-            data: requestData
-        });
-
-        if (result) {
-            tg.showAlert('Лекция обновлена!');
-            this.currentLectureName = `${lectureName}`;
-            DOM.currentLectureTitle.textContent = this.currentLectureName;
-            await this.fetchLectures();
-            Navigation.show('editLectureMenu');
-        }
-    },
-
-    async editLectureListeners() {
-        this.currentLectureName = DOM.currentLectureTitle.textContent;
-        Navigation.show('editLectureForm');
-        await this.prepareEditForm();
     },
 
     async fetchListeners() {
@@ -309,18 +485,19 @@ const LectureManager = {
             if (!data?.listeners) return;
 
             DOM.listenersList.innerHTML = data.listeners.map(listener => `
-                        <div class="list-group-item d-flex align-items-center">
-                            <div class="form-check flex-grow-1">
-                                <input class="form-check-input" type="checkbox" 
-                                      id="listener-${listener._id}">
-                                <label class="form-check-label ms-2" for="listener-${listener._id}">
-                                    ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
-                                </label>
-                            </div>
-                        </div>
-                    `).join('');
+                <div class="list-group-item d-flex align-items-center">
+                    <div class="form-check flex-grow-1">
+                        <input class="form-check-input" type="checkbox" 
+                              id="listener-${listener._id}">
+                        <label class="form-check-label ms-2" for="listener-${listener._id}">
+                            ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
+                        </label>
+                    </div>
+                </div>
+            `).join('');
         } catch (error) {
-            console.error('Failed to fetch listeners:', error);
+            console.error('Fetch listeners error:', error);
+            tg.showAlert('Ошибка загрузки слушателей');
         }
     },
 
@@ -332,80 +509,86 @@ const LectureManager = {
             if (!data?.lectures) return;
 
             DOM.lecturesContainer.innerHTML = data.lectures.map(lecture => `
-                        <div class="list-group-item lecture-card">
-                            <h5>${lecture.name}</h5>
-                            <button class="btn btn-sm btn-primary" 
-                                    data-lecture="${encodeURIComponent(lecture.name)}">
-                                Открыть
-                            </button>
-                        </div>
-                    `).join('');
+                <div class="list-group-item lecture-card">
+                    <h5>${lecture.name}</h5>
+                    <button class="btn btn-sm btn-primary" 
+                            data-lecture="${encodeURIComponent(lecture.name)}">
+                        Открыть
+                    </button>
+                </div>
+            `).join('');
 
-            DOM.lecturesContainer.addEventListener('click', (e) => {
-                const button = e.target.closest('[data-lecture]');
-                if (button) {
-                    this.openLecture(decodeURIComponent(button.dataset.lecture || ''));
-                }
+            DOM.lecturesContainer.querySelectorAll('[data-lecture]').forEach(button => {
+                button.addEventListener('click', () => {
+                    this.openLecture(decodeURIComponent(button.dataset.lecture));
+                });
             });
         } catch (error) {
-            console.error('Failed to fetch lectures:', error);
+            console.error('Fetch lectures error:', error);
+            tg.showAlert('Ошибка загрузки лекций');
         }
     },
 
     openLecture(lectureName) {
-        Navigation.show('editLectureMenu');
+        this.currentLectureName = lectureName;
         DOM.currentLectureTitle.textContent = lectureName;
+        Navigation.show('editLectureMenu');
     },
 
     async saveLecture() {
-        const lectureName = DOM.lectureNameInput.value.trim();
-        if (!lectureName) {
-            tg.showAlert('Введите название лекции!');
-            DOM.lectureNameInput.classList.add('is-invalid');
-            return;
-        }
-        DOM.lectureNameInput.classList.remove('is-invalid');
+        try {
+            const lectureName = DOM.lectureNameInput.value.trim();
+            if (!lectureName) {
+                tg.showAlert('Введите название лекции!');
+                DOM.lectureNameInput.classList.add('is-invalid');
+                return;
+            }
+            DOM.lectureNameInput.classList.remove('is-invalid');
 
-        const selectedListeners = Array.from(
-            document.querySelectorAll('#listenersList input[type="checkbox"]:checked')
-        ).map(checkbox => parseInt(checkbox.id.replace('listener-', '')));
+            const selectedListeners = Array.from(
+                document.querySelectorAll('#listenersList input[type="checkbox"]:checked')
+            ).map(checkbox => parseInt(checkbox.id.replace('listener-', '')));
 
-        const requestData = {
-            name: `${userId}_${lectureName}`,
-            data: selectedListeners.length > 0 ? selectedListeners : [0]
-        };
+            const result = await ApiService.request('save_lecture', {
+                method: 'POST',
+                data: {
+                    name: `${userId}_${lectureName}`,
+                    data: selectedListeners.length > 0 ? selectedListeners : [0]
+                }
+            });
 
-        const result = await ApiService.request('save_lecture', {
-            method: 'POST',
-            data: requestData
-        });
-
-        if (result) {
-            tg.showAlert('Лекция сохранена!');
-            DOM.lectureNameInput.value = '';
-            Navigation.show('mainMenu');
+            if (result) {
+                tg.showAlert('Лекция сохранена!');
+                DOM.lectureNameInput.value = '';
+                Navigation.show('mainMenu');
+            }
+        } catch (error) {
+            console.error('Save lecture error:', error);
+            tg.showAlert('Ошибка сохранения лекции');
         }
     },
 
     async deleteLecture() {
-        const lectureName = DOM.currentLectureTitle.textContent;
-        const requestData = {
-            speaker_id: userId,
-            name: lectureName
-        }
+        try {
+            const lectureName = DOM.currentLectureTitle.textContent;
+            const result = await ApiService.request('delete_lectures', {
+                method: 'DELETE',
+                params: {
+                    speaker_id: userId,
+                    name: lectureName
+                }
+            });
 
-        const result = await ApiService.request('delete_lectures', {
-            method: 'DELETE',
-            params: requestData
-        });
-
-        if (result) {
-            tg.showAlert('Лекция удалена!');
-            await this.fetchLectures();
-            Navigation.show('lecturesList');
+            if (result) {
+                tg.showAlert('Лекция удалена!');
+                await this.fetchLectures();
+                Navigation.show('lecturesList');
+            }
+        } catch (error) {
+            console.error('Delete lecture error:', error);
+            tg.showAlert('Ошибка удаления лекции');
         }
     },
-
 
     initMeetingForm() {
         const lectureName = DOM.currentLectureTitle.textContent;
@@ -413,40 +596,36 @@ const LectureManager = {
 
         const now = new Date();
         now.setMinutes(now.getMinutes() + 10);
-
-        const formattedDateTime = now.toString().slice(0, 16);
+        const formattedDateTime = now.toISOString().slice(0, 16);
 
         DOM.meetingDateTime.min = formattedDateTime;
         DOM.meetingDateTime.value = formattedDateTime;
         DOM.meetingDateTime.classList.remove('is-invalid');
-
         DOM.lectureDuration.classList.remove('is-invalid');
     },
 
     async createMeeting() {
-        const selectedDateTime = new Date(DOM.meetingDateTime.value);
-        const minDateTime = new Date();
-        minDateTime.setMinutes(minDateTime.getMinutes() + 10);
-
-        const duration = parseInt(DOM.lectureDuration.value) || 60;
-        if (duration < 5 || duration > 180) {
-            DOM.lectureDuration.classList.add('is-invalid');
-            tg.showAlert('Пожалуйста, выберите длительность от 5 до 180 минут');
-            return false;
-        }
-        if (!DOM.meetingDateTime.value || selectedDateTime < minDateTime) {
-            DOM.meetingDateTime.classList.add('is-invalid');
-            tg.showAlert('Выберите корректную дату и время (не ранее чем через 10 минут)');
-            return false;
-        }
-
-        const lectureName = DOM.currentLectureTitle.textContent;
-
         try {
+            const selectedDateTime = new Date(DOM.meetingDateTime.value);
+            const minDateTime = new Date();
+            minDateTime.setMinutes(minDateTime.getMinutes() + 10);
+
+            const duration = parseInt(DOM.lectureDuration.value) || 60;
+            if (duration < 5 || duration > 180) {
+                DOM.lectureDuration.classList.add('is-invalid');
+                tg.showAlert('Длительность должна быть от 5 до 180 минут');
+                return false;
+            }
+            if (!DOM.meetingDateTime.value || selectedDateTime < minDateTime) {
+                DOM.meetingDateTime.classList.add('is-invalid');
+                tg.showAlert('Выберите время не ранее чем через 10 минут');
+                return false;
+            }
+
             const result = await ApiService.request('create_meeting', {
                 method: 'POST',
                 data: {
-                    lecture_name: lectureName,
+                    lecture_name: DOM.currentLectureTitle.textContent,
                     speaker: userId,
                     start_datetime: selectedDateTime.toISOString(),
                     duration: duration,
@@ -458,56 +637,88 @@ const LectureManager = {
                 return true;
             }
         } catch (error) {
-            console.error('Ошибка создания встречи:', error);
-            tg.showAlert('Не удалось создать встречу');
+            console.error('Create meeting error:', error);
+            tg.showAlert('Ошибка создания встречи');
         }
         return false;
+    },
+
+    editLectureListeners() {
+        Navigation.show('editLectureForm');
     }
 };
 
+// Навигация
 const Navigation = {
+    screens: [
+        'appMainMenu', 'mainMenu', 'listenerMenu',
+        'joinSpeakerForm', 'leaveSpeakerForm',
+        'newLectureForm', 'lecturesList', 'editLectureMenu',
+        'editLectureForm', 'newMeetingForm'
+    ],
+
     show(screen) {
-        [
-            DOM.appMainMenu, DOM.mainMenu, DOM.listenerMenu,
-            DOM.joinSpeakerForm, DOM.leaveSpeakerForm,
-            DOM.newLectureForm, DOM.lecturesList, DOM.editLectureMenu,
-            DOM.newMeetingForm, DOM.editLectureForm
-        ].forEach(el => el?.classList.add('hidden'));
-
-        const screens = {
-            'appMainMenu': DOM.appMainMenu,
-            'mainMenu': DOM.mainMenu,
-            'listenerMenu': DOM.listenerMenu,
-            'joinSpeakerForm': DOM.joinSpeakerForm,
-            'leaveSpeakerForm': DOM.leaveSpeakerForm,
-            'newLectureForm': DOM.newLectureForm,
-            'lecturesList': DOM.lecturesList,
-            'editLectureMenu': DOM.editLectureMenu,
-            'newMeetingForm': DOM.newMeetingForm,
-            'editLectureForm': DOM.editLectureForm,
-        };
-
-        if (screens[screen]) {
-            screens[screen].classList.remove('hidden');
+        if (!this.screens.includes(screen)) {
+            console.error(`Unknown screen: ${screen}`);
+            return;
         }
 
+        // Скрываем все экраны
+        this.screens.forEach(screenName => {
+            const element = DOM[screenName];
+            if (element) {
+                element.classList.add('hidden');
+            } else if (screenName !== 'currentMeetingLectureTitle') {
+                console.warn(`DOM element ${screenName} not found`);
+            }
+        });
+
+        // Показываем запрошенный экран
+        if (DOM[screen]) {
+            DOM[screen].classList.remove('hidden');
+        } else {
+            console.error(`Screen ${screen} not found in DOM`);
+            return;
+        }
+
+        // Инициализация экрана
         switch (screen) {
             case 'newLectureForm':
                 DOM.currentEditLectureTitle.textContent = 'Новая лекция';
                 DOM.lectureNameInput.value = '';
-                LectureManager.fetchListeners().catch(console.error);
+                LectureManager.fetchListeners()
+                    .catch(error => {
+                        console.error('Error fetching listeners:', error);
+                        tg.showAlert('Ошибка загрузки слушателей');
+                    });
                 break;
             case 'editLectureForm':
-                LectureManager.prepareEditForm().catch(console.error);
+                LectureManager.prepareEditForm()
+                    .catch(error => {
+                        console.error('Error preparing edit form:', error);
+                        tg.showAlert('Ошибка подготовки формы');
+                    });
                 break;
             case 'lecturesList':
-                LectureManager.fetchLectures().catch(console.error);
+                LectureManager.fetchLectures()
+                    .catch(error => {
+                        console.error('Error fetching lectures:', error);
+                        tg.showAlert('Ошибка загрузки лекций');
+                    });
                 break;
             case 'joinSpeakerForm':
-                ListenerManager.fetchSpeakers().catch(console.error);
+                ListenerManager.fetchSpeakers()
+                    .catch(error => {
+                        console.error('Error fetching speakers:', error);
+                        tg.showAlert('Ошибка загрузки списка лекторов');
+                    });
                 break;
             case 'leaveSpeakerForm':
-                ListenerManager.fetchMySpeakers().catch(console.error);
+                ListenerManager.fetchMySpeakers()
+                    .catch(error => {
+                        console.error('Error fetching my speakers:', error);
+                        tg.showAlert('Ошибка загрузки ваших лекторов');
+                    });
                 break;
             case 'newMeetingForm':
                 LectureManager.initMeetingForm();
@@ -516,14 +727,56 @@ const Navigation = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Проверка DOM элементов
-    Object.entries(DOM).forEach(([name, element]) => {
-        if (!element && !name.startsWith('current')) {
-            console.error(`DOM element ${name} not found`);
-        }
-    });
+// Инициализация приложения
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('App initializing...');
 
+    // Инициализация Telegram WebApp
+    tg.expand();
+    tg.ready();
+
+    try {
+        console.log('Authentication process started');
+
+        // 1. Проверяем наличие токенов
+        const hasValidTokens = JwtService.accessToken && JwtService.refreshToken;
+
+        // 2. Если токены есть, просто продолжаем (валидность проверится при первом запросе)
+        if (hasValidTokens) {
+            console.log('Found existing tokens, proceeding');
+        }
+        // 3. Если есть только refresh token, пробуем обновить
+        else if (JwtService.refreshToken) {
+            console.log('Attempting token refresh');
+            if (!await JwtService.refresh()) {
+                console.log('Token refresh failed, performing full login');
+                await performLogin();
+            }
+        }
+        // 4. Если токенов нет, делаем полный логин
+        else {
+            console.log('No tokens found, performing full login');
+            await performLogin();
+        }
+
+        console.log('Authentication completed successfully');
+        setupEventListeners();
+        Navigation.show('appMainMenu');
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        AuthService.logout();
+        tg.showAlert('Ошибка авторизации. Пожалуйста, перезагрузите страницу.');
+    }
+
+    async function performLogin() {
+        if (!await AuthService.login()) {
+            throw new Error('Login failed');
+        }
+        console.log('Login successful');
+    }
+});
+
+function setupEventListeners() {
     // Главное меню
     DOM.speakerPanelBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
     DOM.listenerPanelBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
@@ -541,32 +794,27 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.backToMainMenuFromListenerBtn?.addEventListener('click', () => Navigation.show('appMainMenu'));
 
     // Формы слушателя
-    DOM.confirmJoinSpeakerBtn?.addEventListener('click', () => ListenerManager.joinSpeaker().catch(console.error));
-    DOM.confirmleaveSpeakerBtn?.addEventListener('click', () => ListenerManager.leaveSpeaker().catch(console.error));
+    DOM.confirmJoinSpeakerBtn?.addEventListener('click', () => ListenerManager.joinSpeaker());
+    DOM.confirmleaveSpeakerBtn?.addEventListener('click', () => ListenerManager.leaveSpeaker());
     DOM.backFromJoinSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
     DOM.backFromleaveSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
 
     // Лекции
-    DOM.saveLectureBtn?.addEventListener('click', () => LectureManager.saveLecture().catch(console.error));
+    DOM.saveLectureBtn?.addEventListener('click', () => LectureManager.saveLecture());
     DOM.backFromNewLectureBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
     DOM.backFromLecturesBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
-    DOM.deleteLectureBtn?.addEventListener('click', () => LectureManager.deleteLecture().catch(console.error));
+    DOM.deleteLectureBtn?.addEventListener('click', () => LectureManager.deleteLecture());
     DOM.backFromEditBtn?.addEventListener('click', () => Navigation.show('lecturesList'));
-    DOM.editListenersBtn?.addEventListener('click', () => LectureManager.editLectureListeners().catch(console.error));
-    DOM.saveEditedLectureBtn?.addEventListener('click', () => LectureManager.saveEditedLecture().catch(console.error));
+    DOM.editListenersBtn?.addEventListener('click', () => LectureManager.editLectureListeners());
+    DOM.saveEditedLectureBtn?.addEventListener('click', () => LectureManager.saveEditedLecture());
     DOM.backFromEditLectureBtn?.addEventListener('click', () => Navigation.show('editLectureMenu'));
 
     // Встречи
-    DOM.newMeetingBtn?.addEventListener('click', () => {
-        Navigation.show('newMeetingForm');
-    });
+    DOM.newMeetingBtn?.addEventListener('click', () => Navigation.show('newMeetingForm'));
     DOM.confirmMeetingBtn?.addEventListener('click', async () => {
         if (await LectureManager.createMeeting()) {
             Navigation.show('editLectureMenu');
         }
     });
     DOM.backFromMeetingFormBtn?.addEventListener('click', () => Navigation.show('editLectureMenu'));
-
-    // Стартовая страница
-    Navigation.show('appMainMenu');
-});
+}
