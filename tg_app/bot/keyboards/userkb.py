@@ -32,7 +32,7 @@ def get_web_app():
                 InlineKeyboardButton(
                     text="Открыть WebApp",
                     web_app=WebAppInfo(
-                        url=f"https://mfsdv5-37-44-40-134.ru.tuna.am/index.html?force_reload={timestamp}"
+                        url=f"https://xhsxll-37-44-40-134.ru.tuna.am/index.html?force_reload={timestamp}"
                     ),
                 )
             ]

@@ -1,10 +1,11 @@
 import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from starlette import status
 
 import api_app.services.conferences as srv
+from api_app.auth.jwt import get_current_active_auth_user
 
 from api_app.conference_backend.conference import create_conference
 from api_app.datebases.conference_requests import get_conference
@@ -13,7 +14,11 @@ from api_app.schemas.conferences import ConferenceCreateModel
 from api_app.schemas.errors import ErrorResponseModel
 from api_app.settings import CONFERENCE_BACKEND
 
-router = APIRouter(prefix="/conferences", tags=["conferences"])
+router = APIRouter(
+    prefix="/conferences",
+    tags=["conferences"],
+    dependencies=[Depends(get_current_active_auth_user)],
+)
 
 
 @router.post("/new")

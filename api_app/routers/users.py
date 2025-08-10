@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from starlette import status
 
+from api_app.auth.jwt import get_current_active_auth_user
 from api_app.datebases import (
     users_requests as db,
 )  # напрямую через функции работающие с БД
@@ -15,13 +16,11 @@ from api_app.services import (
 )  # через сервисную прослойку для создания отложенных задач
 from api_app.tasks.tg_messages import print_task
 
-router = APIRouter(prefix="/users", tags=["users"])
-
-
-@router.get("/test")
-async def test():
-    await print_task.kiq()
-    return {"status": "ok"}
+router = APIRouter(
+    prefix="/users",
+    tags=["users"],
+    dependencies=[Depends(get_current_active_auth_user)],
+)
 
 
 @router.get("", status_code=status.HTTP_200_OK, response_model=UserResponse)

@@ -130,6 +130,3 @@ async def send_messages_about_conference_task(conference_id: str) -> None:
     await create_task_for_speaker(conference, speaker)
 
 
-@broker.task
-async def print_task() -> None:
-    logger.warning("eeeeee !!!!")

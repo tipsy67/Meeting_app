@@ -8,7 +8,7 @@ from api_app.datebases import (
 )
 
 from api_app.auth import jwt_utils
-from api_app.auth.jwt_utils import TOKEN_TYPE_FIELD, REFRESH_TOKEN_TYPE
+from api_app.auth.jwt_utils import TOKEN_TYPE_FIELD, REFRESH_TOKEN_TYPE, ACCESS_TOKEN_TYPE
 from api_app.schemas.users import UserResponse
 
 oauth2_scheme = OAuth2PasswordBearer(
@@ -44,7 +44,11 @@ def validate_token_type(
 
 
 async def get_user_by_token_sub(payload: dict) -> UserResponse:
-    user_id: int | None = payload.get("sub")
+    try:
+        user_id = int(payload.get("sub", ""))
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="Invalid subject in token")
+
     if user := await db.get_user(user_id):
         return user
     raise HTTPException(
@@ -62,11 +66,11 @@ def get_auth_user_from_token_of_type(token_type: str):
     return get_auth_user_from_token
 
 get_user_from_refresh_token = get_auth_user_from_token_of_type(REFRESH_TOKEN_TYPE)
-get_user_from_access_token = get_auth_user_from_token_of_type(TOKEN_TYPE_FIELD)
+get_user_from_access_token = get_auth_user_from_token_of_type(ACCESS_TOKEN_TYPE)
 
 def get_current_active_auth_user(
     user: UserResponse = Depends(get_user_from_access_token),
-):
+) -> UserResponse:
     if user.is_active and not user.is_banned:
         return user
     raise HTTPException(

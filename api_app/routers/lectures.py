@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from starlette import status
 
+from api_app.auth.jwt import get_current_active_auth_user
 from api_app.datebases import (
     users_requests as db,
 )  # напрямую через функции работающие с БД
@@ -9,7 +10,11 @@ from api_app.services import (
     users as srv,
 )  # через сервисную прослойку для создания отложенных задач
 
-router = APIRouter(prefix="/lectures", tags=["lectures"])
+router = APIRouter(
+    prefix="/lectures",
+    tags=["lectures"],
+    dependencies=[Depends(get_current_active_auth_user)],
+)
 
 
 # Все лекции привязаны к одному спикеру, слушатели как список

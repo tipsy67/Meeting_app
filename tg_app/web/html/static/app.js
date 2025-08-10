@@ -1,10 +1,9 @@
-// Конфигурация API
 const API_CONFIG = {
-    BASE_URL: 'https://wu9cme-37-44-40-134.ru.tuna.am',
+    BASE_URL: 'https://8yswor-37-44-40-134.ru.tuna.am',
     ENDPOINTS: {
-        login: '/auth/login',  
+        login: '/auth/login',
         refresh: '/auth/refresh',
-        
+
         set_user: '/users',
         get_speakers: '/users/speakers',
         add_to_speaker: '/users/speakers/listeners',
@@ -35,7 +34,7 @@ const initTelegramWebApp = () => {
         console.warn("Telegram WebApp not detected! Running in debug mode");
         window.Telegram = {
             WebApp: {
-                initData: '',
+                initData: 'debug_user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Debug%22%2C%22last_name%22%3A%22User%22%2C%22username%22%3A%22debug_user%22%2C%22language_code%22%3A%22en%22%2C%22allows_write_to_pm%22%3Atrue%7D',
                 expand: () => console.debug("Telegram.WebApp.expand()"),
                 showAlert: (msg) => alert(`ALERT: ${msg}`),
                 ready: (callback) => callback(),
@@ -52,12 +51,19 @@ const initTelegramWebApp = () => {
 
 // Получение пользовательских данных
 const getTelegramUserData = (webApp) => {
-    if (!webApp?.initData) return null;
-    
+    if (!webApp?.initData) {
+        console.warn("No initData in Telegram WebApp");
+        return null;
+    }
+
     try {
         const params = new URLSearchParams(webApp.initData);
         const userParam = params.get('user');
-        return userParam ? JSON.parse(decodeURIComponent(userParam)) : null;
+        if (!userParam) {
+            console.warn("No user parameter in initData");
+            return null;
+        }
+        return JSON.parse(decodeURIComponent(userParam));
     } catch (e) {
         console.error("Error parsing user data:", e);
         return null;
@@ -69,17 +75,33 @@ const tg = initTelegramWebApp();
 const userData = getTelegramUserData(tg);
 const userId = userData?.id || null;
 
+console.log('Telegram WebApp initialized:', tg);
+console.log('User data:', userData);
+console.log('User ID:', userId);
+
 // JWT сервис
 const JwtService = {
     accessToken: localStorage.getItem('accessToken') || null,
     refreshToken: localStorage.getItem('refreshToken') || null,
 
-    setTokens({ access, refresh }) {
-        this.accessToken = access;
-        this.refreshToken = refresh;
-        localStorage.setItem('accessToken', access);
-        localStorage.setItem('refreshToken', refresh);
-        console.log('Tokens updated');  // Логирование
+    setTokens(tokenInfo) {
+        if (!tokenInfo?.access_token) {
+            throw new Error("Access token is required");
+        }
+
+        this.accessToken = tokenInfo.access_token;
+        localStorage.setItem('accessToken', tokenInfo.access_token);
+
+        if (tokenInfo.refresh_token !== undefined && tokenInfo.refresh_token !== null) {
+            this.refreshToken = tokenInfo.refresh_token;
+            localStorage.setItem('refreshToken', tokenInfo.refresh_token);
+        }
+
+        console.log('Tokens updated', {
+            access: this.accessToken,
+            refresh: this.refreshToken, // Используем текущее значение (новое или старое)
+            tokenType: tokenInfo.token_type || 'Bearer'
+        });
     },
 
     clearTokens() {
@@ -87,7 +109,7 @@ const JwtService = {
         this.refreshToken = null;
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        console.log('Tokens cleared');  // Логирование
+        console.log('Tokens cleared');
     },
 
     getAuthHeader() {
@@ -104,7 +126,7 @@ const JwtService = {
         }
 
         try {
-            console.log('Attempting token refresh');
+            console.log('Attempting token refresh with token:', this.refreshToken);
             const response = await fetch(API_CONFIG.getUrl('refresh'), {
                 method: 'POST',
                 headers: {
@@ -113,14 +135,18 @@ const JwtService = {
                 }
             });
 
+            console.log('Refresh response status:', response.status);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('Refresh successful, new tokens:', data);
                 this.setTokens(data);
-                console.log('Token refresh successful');
                 return true;
             }
 
             console.log('Token refresh failed with status:', response.status);
+            const errorText = await response.text();
+            console.log('Refresh error response:', errorText);
             this.clearTokens();
             return false;
         } catch (error) {
@@ -130,27 +156,43 @@ const JwtService = {
         }
     }
 };
+
 // Auth сервис
 const AuthService = {
     async login() {
         try {
-            if (!tg.initData) return false;
+            if (!tg.initData) {
+                console.error('No initData available for login');
+                tg.showAlert('Не удалось получить данные Telegram. Пожалуйста, перезагрузите приложение.');
+                return false;
+            }
+
+            console.log('Attempting login with initData:', tg.initData);
 
             const response = await fetch(API_CONFIG.getUrl('login'), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ initData: tg.initData })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({initData: tg.initData})
             });
 
-            if (response.ok) {
-                const tokens = await response.json();
-                JwtService.setTokens(tokens);
-                return true;
+            console.log('Login response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Login failed with status:', response.status, 'Error:', errorText);
+                tg.showAlert('Ошибка входа. Пожалуйста, попробуйте снова.');
+                return false;
             }
+
+            const tokens = await response.json();
+            console.log('Login successful, received tokens:', tokens);
+            JwtService.setTokens(tokens);
+            return true;
         } catch (error) {
             console.error('Authentication failed:', error);
+            tg.showAlert('Ошибка соединения. Проверьте интернет и попробуйте снова.');
+            return false;
         }
-        return false;
     },
 
     logout() {
@@ -162,14 +204,21 @@ const AuthService = {
     },
 
     async ensureAuth() {
-        if (this.isAuthenticated()) return true;
+        if (this.isAuthenticated()) {
+            console.log('Already authenticated');
+            return true;
+        }
+
+        console.log('Not authenticated, attempting login');
         return await this.login();
     }
 };
 
 // Сервис API
 const ApiService = {
-    async request(endpoint, { method = 'GET', params = {}, data } = {}) {
+    async request(endpoint, {method = 'GET', params = {}, data} = {}) {
+        console.log(`API request to ${endpoint}`, {method, params, data});
+
         // Для эндпоинтов login и refresh не проверяем авторизацию
         if (!['login', 'refresh'].includes(endpoint)) {
             // Проверяем наличие токена
@@ -187,7 +236,7 @@ const ApiService = {
         });
 
         try {
-            console.log(`Making request to ${endpoint}`);
+            console.log(`Making request to ${url.toString()}`);
             let response = await fetch(url, {
                 method,
                 headers: {
@@ -196,6 +245,8 @@ const ApiService = {
                 },
                 body: data ? JSON.stringify(data) : undefined
             });
+
+            console.log(`Response status for ${endpoint}:`, response.status);
 
             // Если 401 - пробуем обновить токен только один раз
             if (response.status === 401) {
@@ -210,6 +261,8 @@ const ApiService = {
                         },
                         body: data ? JSON.stringify(data) : undefined
                     });
+
+                    console.log(`Retry response status for ${endpoint}:`, response.status);
                 } else {
                     throw new Error('Session expired');
                 }
@@ -219,19 +272,23 @@ const ApiService = {
                 throw await this.parseError(response);
             }
 
-            return await response.json();
+            const responseData = await response.json();
+            console.log(`API response for ${endpoint}:`, responseData);
+            return responseData;
         } catch (error) {
             console.error(`API request to ${endpoint} failed:`, error);
             this.handleError(error);
             throw error;
         }
     },
+
     async parseError(response) {
         try {
             const errorData = await response.json();
             return new Error(errorData.message || `HTTP ${response.status}`);
         } catch {
-            return new Error(await response.text() || 'Unknown error');
+            const text = await response.text();
+            return new Error(text || `HTTP ${response.status}`);
         }
     },
 
@@ -740,6 +797,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 1. Проверяем наличие токенов
         const hasValidTokens = JwtService.accessToken && JwtService.refreshToken;
+        console.log('Initial token state:', {
+            accessToken: !!JwtService.accessToken,
+            refreshToken: !!JwtService.refreshToken
+        });
 
         // 2. Если токены есть, просто продолжаем (валидность проверится при первом запросе)
         if (hasValidTokens) {
@@ -769,6 +830,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function performLogin() {
+        console.log('Performing login...');
         if (!await AuthService.login()) {
             throw new Error('Login failed');
         }
