@@ -49,6 +49,7 @@ async def root():
 
 
 api_main_app.include_router(users.router)
+api_main_app.include_router(users.router_unsecure)
 api_main_app.include_router(lectures.router)
 api_main_app.include_router(conference.router)
 api_main_app.include_router(auth.router)

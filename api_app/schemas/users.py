@@ -34,10 +34,41 @@ class SpeakerListener(BaseModel):
 class SpeakerListenerResponse(SpeakerListener):
     created_at: datetime
 
-    class Config:
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(
+        json_encoders={ObjectId: str}
+    )
 
 
 class LectureRequest(BaseModel):
     name: str
     data: list[int]
+
+
+class LectureResponse(BaseModel):
+    lecture_name: str
+    speaker_id: int
+    listeners: list[int]
+    updated_at: datetime
+
+    model_config = ConfigDict(
+        json_encoders={
+            datetime: lambda v: v.isoformat()
+        })
+
+
+class UserToListResponse(BaseModel):
+    id: int = Field(alias="_id", serialization_alias="id")
+    username: str
+    full_name: Optional[str] = None
+
+
+class SpeakersListResponse(BaseModel):
+    speakers: list[UserToListResponse]
+
+
+class ListenersListResponse(BaseModel):
+    listeners: list[UserToListResponse]
+
+
+class ListenersFromLectureResponse(BaseModel):
+    listeners: list[UserResponse]

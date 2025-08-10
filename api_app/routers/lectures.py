@@ -4,7 +4,7 @@ from starlette import status
 from api_app.auth.jwt import get_current_active_auth_user
 from api_app.datebases import \
     users_requests as db  # напрямую через функции работающие с БД
-from api_app.schemas.users import LectureRequest
+from api_app.schemas.users import LectureRequest, ListenersFromLectureResponse
 from api_app.services import \
     users as srv  # через сервисную прослойку для создания отложенных задач
 
@@ -31,7 +31,7 @@ async def delete_lecture_rt(speaker_id: int, name: str):
     return await srv.delete_lecture(speaker_id, name)
 
 
-@router.get("/listeners", status_code=status.HTTP_200_OK)
+@router.get("/listeners", status_code=status.HTTP_200_OK, response_model=ListenersFromLectureResponse)
 async def get_listener_from_lecture_rt(speaker_id: int, name: str):
     return await db.get_listeners_from_lecture(speaker_id, name)
 

@@ -362,17 +362,17 @@ const ListenerManager = {
 
             if (!speakersData?.speakers) return;
 
-            const selectedSpeakerIds = selectedSpeakersData?.speakers?.map(s => s._id) || [];
+            const selectedSpeakerIds = selectedSpeakersData?.speakers?.map(s => s.id) || [];
 
             DOM.speakersList.innerHTML = speakersData.speakers.map(speaker => {
-                const isSelected = selectedSpeakerIds.includes(speaker._id);
+                const isSelected = selectedSpeakerIds.includes(speaker.id);
                 return `
                     <div class="list-group-item d-flex align-items-center">
                         <div class="form-check flex-grow-1">
                             <input class="form-check-input" type="radio" name="speaker" 
-                                  id="speaker-${speaker._id}" value="${speaker._id}"
+                                  id="speaker-${speaker.id}" value="${speaker.id}"
                                   ${isSelected ? 'disabled' : ''}>
-                            <label class="form-check-label ms-2" for="speaker-${speaker._id}" 
+                            <label class="form-check-label ms-2" for="speaker-${speaker.id}" 
                                   ${isSelected ? 'style="opacity: 0.5;"' : ''}>
                                 ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
                                 ${isSelected ? ' ✅' : ''}
@@ -399,9 +399,9 @@ const ListenerManager = {
                     <div class="form-check flex-grow-1">
                         <input class="form-check-input" type="radio" 
                                name="speaker" 
-                               id="speaker-${speaker._id}" 
-                               value="${speaker._id}">
-                        <label class="form-check-label ms-2" for="speaker-${speaker._id}">
+                               id="speaker-${speaker.id}" 
+                               value="${speaker.id}">
+                        <label class="form-check-label ms-2" for="speaker-${speaker.id}">
                             ${speaker.username || 'No username'} 
                             (${speaker.full_name || 'No name'})
                         </label>
@@ -476,15 +476,15 @@ const LectureManager = {
 
             if (!allListeners?.listeners) return;
 
-            const currentListeners = lectureData?.listeners?.map(l => l._id) || [];
+            const currentListeners = lectureData?.listeners?.map(l => l.id) || [];
 
             DOM.editListenersList.innerHTML = allListeners.listeners.map(listener => `
                 <div class="list-group-item d-flex align-items-center">
                     <div class="form-check flex-grow-1">
                         <input class="form-check-input" type="checkbox" 
-                              id="edit-listener-${listener._id}"
-                              ${currentListeners.includes(listener._id) ? 'checked' : ''}>
-                        <label class="form-check-label ms-2" for="edit-listener-${listener._id}">
+                              id="edit-listener-${listener.id}"
+                              ${currentListeners.includes(listener.id) ? 'checked' : ''}>
+                        <label class="form-check-label ms-2" for="edit-listener-${listener.id}">
                             ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
                         </label>
                     </div>
@@ -545,8 +545,8 @@ const LectureManager = {
                 <div class="list-group-item d-flex align-items-center">
                     <div class="form-check flex-grow-1">
                         <input class="form-check-input" type="checkbox" 
-                              id="listener-${listener._id}">
-                        <label class="form-check-label ms-2" for="listener-${listener._id}">
+                              id="listener-${listener.id}">
+                        <label class="form-check-label ms-2" for="listener-${listener.id}">
                             ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
                         </label>
                     </div>

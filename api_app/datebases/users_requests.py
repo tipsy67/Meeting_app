@@ -6,7 +6,8 @@ from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import (SpeakerListenerResponse, UserCreateUpdate,
+from api_app.schemas.users import (SpeakerListenerResponse,
+                                   SpeakersListResponse, UserCreateUpdate,
                                    UserResponse)
 
 
@@ -52,7 +53,7 @@ async def set_user(tg_user: UserCreateUpdate) -> UserResponse:
     return UserResponse(**user)
 
 
-async def get_all_speakers():
+async def get_all_speakers() -> dict:
     pipeline = [
         {"$match": {"is_speaker": True, "is_active": True}},
         {
