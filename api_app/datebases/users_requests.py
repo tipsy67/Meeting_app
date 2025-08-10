@@ -6,11 +6,8 @@ from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import (
-    SpeakerListenerResponse,
-    UserCreateUpdate,
-    UserResponse,
-)
+from api_app.schemas.users import (SpeakerListenerResponse, UserCreateUpdate,
+                                   UserResponse)
 
 
 async def get_user(tg_user_id: int) -> UserResponse:
@@ -254,7 +251,8 @@ async def save_lecture(data):
 
     return lecture
 
-async def increment_request_counter(speaker_id: int, lecture_name:str):
+
+async def increment_request_counter(speaker_id: int, lecture_name: str):
     now = datetime.now()
 
     lecture = await db.lecture_collection.find_one_and_update(
@@ -263,9 +261,7 @@ async def increment_request_counter(speaker_id: int, lecture_name:str):
             "$set": {
                 "updated_at": now,
             },
-            "$inc": {
-                "request_counter": 1
-            }
+            "$inc": {"request_counter": 1},
         },
         projection={"_id": False},
         return_document=ReturnDocument.AFTER,

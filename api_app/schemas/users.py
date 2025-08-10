@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from bson import ObjectId
-from pydantic import BaseModel, Field, field_validator, validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator, validator
 from typing_extensions import Optional
 
 from api_app.core.config import settings

@@ -3,12 +3,10 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from starlette import status
 
-from api_app.datebases import (
-    users_requests as db,
-)
-
 from api_app.auth import jwt_utils
-from api_app.auth.jwt_utils import TOKEN_TYPE_FIELD, REFRESH_TOKEN_TYPE, ACCESS_TOKEN_TYPE
+from api_app.auth.jwt_utils import (ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE,
+                                    TOKEN_TYPE_FIELD)
+from api_app.datebases import users_requests as db
 from api_app.schemas.users import UserResponse
 
 oauth2_scheme = OAuth2PasswordBearer(
@@ -40,7 +38,8 @@ def validate_token_type(
         return True
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=f"invalid token type {current_token_type!r} expected {token_type!r}",)
+        detail=f"invalid token type {current_token_type!r} expected {token_type!r}",
+    )
 
 
 async def get_user_by_token_sub(payload: dict) -> UserResponse:
@@ -56,6 +55,7 @@ async def get_user_by_token_sub(payload: dict) -> UserResponse:
         detail="token invalid (user not found)",
     )
 
+
 def get_auth_user_from_token_of_type(token_type: str):
     async def get_auth_user_from_token(
         payload: dict = Depends(get_current_token_payload),
@@ -65,8 +65,10 @@ def get_auth_user_from_token_of_type(token_type: str):
 
     return get_auth_user_from_token
 
+
 get_user_from_refresh_token = get_auth_user_from_token_of_type(REFRESH_TOKEN_TYPE)
 get_user_from_access_token = get_auth_user_from_token_of_type(ACCESS_TOKEN_TYPE)
+
 
 def get_current_active_auth_user(
     user: UserResponse = Depends(get_user_from_access_token),

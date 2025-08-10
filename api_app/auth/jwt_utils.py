@@ -1,7 +1,7 @@
 import uuid
+from datetime import datetime, timedelta, timezone
 
 import jwt
-from datetime import timedelta, datetime, timezone
 
 from api_app.core.config import settings
 from api_app.schemas.users import UserCreateUpdate, UserResponse
@@ -9,6 +9,7 @@ from api_app.schemas.users import UserCreateUpdate, UserResponse
 TOKEN_TYPE_FIELD = "type"
 ACCESS_TOKEN_TYPE = "access"
 REFRESH_TOKEN_TYPE = "refresh"
+
 
 def decode_jwt(
     token: str | bytes,
@@ -21,6 +22,7 @@ def decode_jwt(
         algorithms=[algorithm],
     )
     return decoded
+
 
 def encode_jwt(
     payload: dict,
@@ -46,6 +48,7 @@ def encode_jwt(
         algorithm=algorithm,
     )
     return encoded
+
 
 def create_jwt(
     token_type: str,
