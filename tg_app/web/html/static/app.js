@@ -1,5 +1,5 @@
 const API_CONFIG = {
-    BASE_URL: 'https://8yswor-37-44-40-134.ru.tuna.am',
+    BASE_URL: 'https://aqosvn-213-87-151-31.ru.tuna.am',
     ENDPOINTS: {
         login: '/auth/login',
         refresh: '/auth/refresh',

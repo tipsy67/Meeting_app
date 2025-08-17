@@ -4,8 +4,11 @@ from jwt import InvalidTokenError
 from starlette import status
 
 from api_app.auth import jwt_utils
-from api_app.auth.jwt_utils import (ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE,
-                                    TOKEN_TYPE_FIELD)
+from api_app.auth.jwt_utils import (
+    ACCESS_TOKEN_TYPE,
+    REFRESH_TOKEN_TYPE,
+    TOKEN_TYPE_FIELD,
+)
 from api_app.datebases import users_requests as db
 from api_app.schemas.users import UserResponse
 

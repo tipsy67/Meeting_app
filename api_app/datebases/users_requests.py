@@ -6,9 +6,12 @@ from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import (SpeakerListenerResponse,
-                                   SpeakersListResponse, UserCreateUpdate,
-                                   UserResponse)
+from api_app.schemas.users import (
+    SpeakerListenerResponse,
+    SpeakersListResponse,
+    UserCreateUpdate,
+    UserResponse,
+)
 
 
 async def get_user(tg_user_id: int) -> UserResponse:
@@ -162,16 +165,17 @@ async def get_all_lectures(speaker_id: int):
         {"$match": {"speaker_id": speaker_id}},
         {
             "$project": {
-                "_id": "$speaker_id",
+                "_id": 0,
+                "id": "$speaker_id",
                 "name": "$lecture_name",
-                "update_at": 1,
+                "updated_at": 1,
             },
         },
-        {"$sort": {"update_at": 1}},
+        {"$sort": {"updated_at": -1}},
     ]
     lectures_cursor = await db.lecture_collection.aggregate(pipeline)
     lectures = await lectures_cursor.to_list(length=None)
-
+    print(lectures)
     return {"lectures": lectures}
 
 

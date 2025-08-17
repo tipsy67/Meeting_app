@@ -34,26 +34,7 @@ class SpeakerListener(BaseModel):
 class SpeakerListenerResponse(SpeakerListener):
     created_at: datetime
 
-    model_config = ConfigDict(
-        json_encoders={ObjectId: str}
-    )
-
-
-class LectureRequest(BaseModel):
-    name: str
-    data: list[int]
-
-
-class LectureResponse(BaseModel):
-    lecture_name: str
-    speaker_id: int
-    listeners: list[int]
-    updated_at: datetime
-
-    model_config = ConfigDict(
-        json_encoders={
-            datetime: lambda v: v.isoformat()
-        })
+    model_config = ConfigDict(json_encoders={ObjectId: str})
 
 
 class UserToListResponse(BaseModel):
@@ -72,3 +53,29 @@ class ListenersListResponse(BaseModel):
 
 class ListenersFromLectureResponse(BaseModel):
     listeners: list[UserResponse]
+
+
+class LectureRequest(BaseModel):
+    name: str
+    data: list[int]
+
+
+class LectureResponse(BaseModel):
+    lecture_name: str
+    speaker_id: int
+    listeners: list[int]
+    updated_at: datetime
+
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
+
+class LecturesBase(BaseModel):
+    id: int
+    name: str
+    updated_at: datetime
+
+
+class LecturesListResponse(BaseModel):
+    lectures: list[LecturesBase]
+
+class DeleteLectureResponse(BaseModel):
+    deleted: LectureResponse
