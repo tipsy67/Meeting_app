@@ -68,14 +68,17 @@ class LectureResponse(BaseModel):
 
     model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
+
 class LecturesBase(BaseModel):
     id: int
     name: str
     updated_at: datetime
+    speaker: dict | None = None
 
 
 class LecturesListResponse(BaseModel):
     lectures: list[LecturesBase]
+
 
 class DeleteLectureResponse(BaseModel):
     deleted: LectureResponse

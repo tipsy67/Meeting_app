@@ -2,15 +2,12 @@
 Module for managing Google Meet conference operations.
 """
 
-from google_services.calendar_api_utils import create_event
-
-from api_app.schemas.conferences import (
-    ConferenceCreateModel,
-    ConferenceModel,
-    ConferenceOutputModel,
-    ConferenceParticipant,
-)
+from api_app.schemas.conferences import (ConferenceCreateModel,
+                                         ConferenceModel,
+                                         ConferenceOutputModel,
+                                         ConferenceParticipant)
 from api_app.schemas.errors import ErrorResponseModel
+from google_services.calendar_api_utils import create_event
 
 
 async def create_goole_meet_conference(

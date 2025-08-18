@@ -6,12 +6,9 @@ from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import (
-    SpeakerListenerResponse,
-    SpeakersListResponse,
-    UserCreateUpdate,
-    UserResponse,
-)
+from api_app.schemas.users import (SpeakerListenerResponse,
+                                   SpeakersListResponse, UserCreateUpdate,
+                                   UserResponse)
 
 
 async def get_user(tg_user_id: int) -> UserResponse:
@@ -179,6 +176,38 @@ async def get_all_lectures(speaker_id: int):
     return {"lectures": lectures}
 
 
+async def get_all_lectures_by_listener(listener_id: int):
+    pipeline = [
+        {"$match": {"listeners": listener_id}},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "speaker_id",
+                "foreignField": "_id",
+                "as": "speaker_info",
+            }
+        },
+        {"$unwind": "$speaker_info"},  #
+        {
+            "$project": {
+                "_id": 0,
+                "id": "$speaker_id",
+                "name": "$lecture_name",
+                "updated_at": 1,
+                "speaker": {
+                    "first_name": "$speaker_info.first_name",
+                    "last_name": "$speaker_info.last_name",
+                    "username": "$speaker_info.username",
+                },
+            }
+        },
+        {"$sort": {"updated_at": -1}},
+    ]
+    lectures_cursor = await db.lecture_collection.aggregate(pipeline)
+    lectures = await lectures_cursor.to_list(length=None)
+    return {"lectures": lectures}
+
+
 async def get_listeners_ids_from_lecture(speaker_id: int, name: str) -> dict:
     lecture = await db.lecture_collection.find_one(
         {"speaker_id": speaker_id, "lecture_name": name}, {"listeners": 1}
@@ -227,6 +256,24 @@ async def remove_listener_from_all_lectures(listener_id: int, speaker_id: int):
         {
             "listeners": listener_id,
             "speaker_id": speaker_id,
+        },
+        {"$pull": {"listeners": listener_id}},
+    )
+
+    return {"matched": result.matched_count, "modified": result.modified_count}
+
+
+async def remove_listener_from_lecture(listener_id: int, lecture: str):
+    """
+    Удаляет слушателя из лекции.
+    """
+    speaker_id, lecture_name = lecture.split("_")
+    speaker_id = int(speaker_id)
+    result = await db.lecture_collection.update_many(
+        {
+            "speaker_id": speaker_id,
+            "listeners": listener_id,
+            "lecture_name": lecture_name,
         },
         {"$pull": {"listeners": listener_id}},
     )

@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
+                           WebAppInfo)
 
 
 def create_buttons(l10n, buttons_data: list[tuple[str, str]]) -> InlineKeyboardMarkup:
@@ -32,7 +33,7 @@ def get_web_app():
                 InlineKeyboardButton(
                     text="Открыть WebApp",
                     web_app=WebAppInfo(
-                        url=f"https://f4at1p-213-87-151-31.ru.tuna.am/index.html?force_reload={timestamp}"
+                        url=f"https://wau1n9-213-87-151-31.ru.tuna.am/index.html?force_reload={timestamp}"
                     ),
                 )
             ]

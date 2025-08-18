@@ -1,5 +1,5 @@
 const API_CONFIG = {
-    BASE_URL: 'https://aqosvn-213-87-151-31.ru.tuna.am',
+    BASE_URL: 'https://gb59jr-213-87-151-31.ru.tuna.am',
     ENDPOINTS: {
         login: '/auth/login',
         refresh: '/auth/refresh',
@@ -18,6 +18,7 @@ const API_CONFIG = {
 
         get_listeners_from_lecture: '/lectures/listeners',
         remove_from_all_lectures: '/lectures/listeners-unsubscribe',
+        remove_from_lecture: '/lectures/listeners-unsubscribe-lecture',
         create_meeting: '/conferences/new'
     },
     getUrl(endpoint) {
@@ -349,10 +350,65 @@ const DOM = {
     editListenersList: document.getElementById('editListenersList'),
     saveEditedLectureBtn: document.getElementById('saveEditedLectureBtn'),
     backFromEditLectureBtn: document.getElementById('backFromEditLectureBtn'),
+    leaveLectureBtn: document.getElementById('leaveLectureBtn'),
+    leaveLectureForm: document.getElementById('leaveLectureForm'),
+    lecturesToLeaveList: document.getElementById('lecturesToLeaveList'),
+    confirmLeaveLectureBtn: document.getElementById('confirmLeaveLectureBtn'),
+    backFromLeaveLectureBtn: document.getElementById('backFromLeaveLectureBtn'),
 };
 
 // Менеджер слушателей
 const ListenerManager = {
+    async fetchMyLectures() {
+        try {
+            const data = await ApiService.request('get_lectures', {
+                params: {listener_id: userId}
+            });
+            if (!data?.lectures) return;
+
+            DOM.lecturesToLeaveList.innerHTML = data.lectures.map(lecture => `
+            <div class="list-group-item d-flex align-items-center">
+                <div class="form-check flex-grow-1">
+                    <input class="form-check-input" type="radio" 
+                           name="lecture" 
+                           id="lecture-${lecture.id}" 
+                           value="${lecture.id}_${lecture.name}">
+                    <label class="form-check-label ms-2" for="lecture-${lecture.id}">
+                        ${lecture.name || 'No name'}
+                            <span class="text-muted small">@${lecture.speaker?.username || ''}
+                            (${lecture.speaker?.first_name || ''} ${lecture.speaker?.last_name || ''} )</span>
+                    </label>
+                </div>
+            </div>
+        `).join('');
+        } catch (error) {
+            console.error('Failed to fetch listener lectures:', error);
+            tg.showAlert('Ошибка загрузки ваших лекций');
+        }
+    },
+
+    async leaveLecture() {
+        try {
+            const selectedLecture = document.querySelector('#lecturesToLeaveList input[name="lecture"]:checked');
+            if (!selectedLecture) {
+                tg.showAlert('Выберите лекцию!');
+                return;
+            }
+
+            const result = await ApiService.request('remove_from_lecture', {
+                method: 'DELETE',
+                params: {listener_id: userId, lecture: selectedLecture.value}
+            });
+
+            if (result) {
+                tg.showAlert('Вы успешно отписались от лекции!');
+                Navigation.show('listenerMenu');
+            }
+        } catch (error) {
+            console.error('Leave lecture error:', error);
+            tg.showAlert('Ошибка отписки от лекции');
+        }
+    },
     async fetchSpeakers() {
         try {
             const [speakersData, selectedSpeakersData] = await Promise.all([
@@ -709,7 +765,7 @@ const LectureManager = {
 const Navigation = {
     screens: [
         'appMainMenu', 'mainMenu', 'listenerMenu',
-        'joinSpeakerForm', 'leaveSpeakerForm',
+        'joinSpeakerForm', 'leaveSpeakerForm', 'leaveLectureForm',
         'newLectureForm', 'lecturesList', 'editLectureMenu',
         'editLectureForm', 'newMeetingForm'
     ],
@@ -779,6 +835,13 @@ const Navigation = {
                 break;
             case 'newMeetingForm':
                 LectureManager.initMeetingForm();
+                break;
+            case 'leaveLectureForm':
+                ListenerManager.fetchMyLectures()
+                    .catch(error => {
+                        console.error('Error fetching my lectures:', error);
+                        tg.showAlert('Ошибка загрузки ваших лекций');
+                    });
                 break;
         }
     }
@@ -860,6 +923,9 @@ function setupEventListeners() {
     DOM.confirmleaveSpeakerBtn?.addEventListener('click', () => ListenerManager.leaveSpeaker());
     DOM.backFromJoinSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
     DOM.backFromleaveSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
+    DOM.leaveLectureBtn?.addEventListener('click', () => Navigation.show('leaveLectureForm'));
+    DOM.confirmLeaveLectureBtn?.addEventListener('click', () => ListenerManager.leaveLecture());
+    DOM.backFromLeaveLectureBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
 
     // Лекции
     DOM.saveLectureBtn?.addEventListener('click', () => LectureManager.saveLecture());

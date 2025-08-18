@@ -31,6 +31,7 @@
     <div id="listenerMenu" class="hidden">
         <h2 class="mb-4">Панель слушателя</h2>
         <button id="joinSpeakerBtn" class="btn btn-primary w-100 mb-2">Добавиться к лектору</button>
+        <button id="leaveLectureBtn" class="btn btn-warning w-100 mb-2">Отписаться от лекции</button>
         <button id="leaveSpeakerBtn" class="btn btn-danger w-100 mb-2">Отписаться от лектора</button>
         <button id="backToMainMenuFromListenerBtn" class="btn btn-outline-secondary w-100 mt-3">Назад</button>
     </div>
@@ -44,6 +45,17 @@
         </div>
         <button id="confirmJoinSpeakerBtn" class="btn btn-success">Подтвердить</button>
         <button id="backFromJoinSpeakerBtn" class="btn btn-outline-secondary">Назад</button>
+    </div>
+
+    <!-- Форма отписки от лекций -->
+    <div id="leaveLectureForm" class="hidden">
+        <h3 class="mb-3">Отписаться от лекции</h3>
+        <div class="mb-3">
+            <label class="form-label">Выберите лекцию для отписки</label>
+            <div id="lecturesToLeaveList" class="list-group scrollable-list"></div>
+        </div>
+        <button id="confirmLeaveLectureBtn" class="btn btn-danger">Подтвердить</button>
+        <button id="backFromLeaveLectureBtn" class="btn btn-outline-secondary">Назад</button>
     </div>
 
     <!-- Форма отписки от лектора -->

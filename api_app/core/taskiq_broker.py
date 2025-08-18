@@ -2,7 +2,8 @@ __all__ = ("broker", "redis_source", "scheduler")
 
 import taskiq_fastapi
 from taskiq import PrometheusMiddleware, TaskiqScheduler
-from taskiq_redis import RedisAsyncResultBackend, RedisScheduleSource, RedisStreamBroker
+from taskiq_redis import (RedisAsyncResultBackend, RedisScheduleSource,
+                          RedisStreamBroker)
 
 # broker = AioPikaBroker(url=settings.rabbitmq.url)
 #
