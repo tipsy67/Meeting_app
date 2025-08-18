@@ -707,4 +707,6 @@ Temporary Items
 
 my_questions
 
-!/api_app/.env.dt
+/api_app/.env.dt
+/api_app/certs/
+

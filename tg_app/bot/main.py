@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from aiogram import Bot, Dispatcher, F, types
+from aiogram.client.session.aiohttp import AiohttpSession
 from dotenv import load_dotenv
 
 from tg_app.bot.middlewares.language import FluentL10nMiddleware
@@ -12,7 +13,10 @@ from handlers.user import user
 
 
 async def main():
-    bot = Bot(token=os.environ.get("TG_TOKEN"))
+    # proxy_url = "http://127.0.0.1:2080"
+    # session = AiohttpSession(proxy=proxy_url)
+
+    bot = Bot(token=os.environ.get("TG_TOKEN"))  # , session=session)
     dp = Dispatcher()
     dp.update.middleware(FluentL10nMiddleware("locales"))
     dp.include_routers(

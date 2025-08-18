@@ -6,11 +6,9 @@ from pymongo import ReturnDocument
 from starlette import status
 
 from api_app.datebases import config_base as db
-from api_app.schemas.users import (
-    SpeakerListenerResponse,
-    UserCreateUpdate,
-    UserResponse,
-)
+from api_app.schemas.users import (SpeakerListenerResponse,
+                                   SpeakersListResponse, UserCreateUpdate,
+                                   UserResponse)
 
 
 async def get_user(tg_user_id: int) -> UserResponse:
@@ -55,7 +53,7 @@ async def set_user(tg_user: UserCreateUpdate) -> UserResponse:
     return UserResponse(**user)
 
 
-async def get_all_speakers():
+async def get_all_speakers() -> dict:
     pipeline = [
         {"$match": {"is_speaker": True, "is_active": True}},
         {
@@ -164,16 +162,49 @@ async def get_all_lectures(speaker_id: int):
         {"$match": {"speaker_id": speaker_id}},
         {
             "$project": {
-                "_id": "$speaker_id",
+                "_id": 0,
+                "id": "$speaker_id",
                 "name": "$lecture_name",
-                "update_at": 1,
+                "updated_at": 1,
             },
         },
-        {"$sort": {"update_at": -1}},
+        {"$sort": {"updated_at": -1}},
     ]
     lectures_cursor = await db.lecture_collection.aggregate(pipeline)
     lectures = await lectures_cursor.to_list(length=None)
+    print(lectures)
+    return {"lectures": lectures}
 
+
+async def get_all_lectures_by_listener(listener_id: int):
+    pipeline = [
+        {"$match": {"listeners": listener_id}},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "speaker_id",
+                "foreignField": "_id",
+                "as": "speaker_info",
+            }
+        },
+        {"$unwind": "$speaker_info"},  #
+        {
+            "$project": {
+                "_id": 0,
+                "id": "$speaker_id",
+                "name": "$lecture_name",
+                "updated_at": 1,
+                "speaker": {
+                    "first_name": "$speaker_info.first_name",
+                    "last_name": "$speaker_info.last_name",
+                    "username": "$speaker_info.username",
+                },
+            }
+        },
+        {"$sort": {"updated_at": -1}},
+    ]
+    lectures_cursor = await db.lecture_collection.aggregate(pipeline)
+    lectures = await lectures_cursor.to_list(length=None)
     return {"lectures": lectures}
 
 
@@ -232,6 +263,24 @@ async def remove_listener_from_all_lectures(listener_id: int, speaker_id: int):
     return {"matched": result.matched_count, "modified": result.modified_count}
 
 
+async def remove_listener_from_lecture(listener_id: int, lecture: str):
+    """
+    Удаляет слушателя из лекции.
+    """
+    speaker_id, lecture_name = lecture.split("_")
+    speaker_id = int(speaker_id)
+    result = await db.lecture_collection.update_many(
+        {
+            "speaker_id": speaker_id,
+            "listeners": listener_id,
+            "lecture_name": lecture_name,
+        },
+        {"$pull": {"listeners": listener_id}},
+    )
+
+    return {"matched": result.matched_count, "modified": result.modified_count}
+
+
 async def save_lecture(data):
     speaker_id, lecture_name = data.name.split("_")
     speaker_id = int(speaker_id)
@@ -254,7 +303,8 @@ async def save_lecture(data):
 
     return lecture
 
-async def increment_request_counter(speaker_id: int, lecture_name:str):
+
+async def increment_request_counter(speaker_id: int, lecture_name: str):
     now = datetime.now()
 
     lecture = await db.lecture_collection.find_one_and_update(
@@ -263,9 +313,7 @@ async def increment_request_counter(speaker_id: int, lecture_name:str):
             "$set": {
                 "updated_at": now,
             },
-            "$inc": {
-                "request_counter": 1
-            }
+            "$inc": {"request_counter": 1},
         },
         projection={"_id": False},
         return_document=ReturnDocument.AFTER,

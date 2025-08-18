@@ -114,7 +114,7 @@ async def create_task_for_speaker(
                 time_to_start=await l10n.format_time(speaker, timedelta_new),
                 duration=conference.duration,
                 link=conference.conference_link,
-                token=conference.speaker.id
+                token=conference.speaker.id,
             )
             await send_individual_message_to_users_task.schedule_by_time(
                 redis_source, target_time, user_id=speaker.id, text=full_message
@@ -128,8 +128,3 @@ async def send_messages_about_conference_task(conference_id: str) -> None:
 
     await create_task_for_listeners(conference, speaker)
     await create_task_for_speaker(conference, speaker)
-
-
-@broker.task
-async def print_task() -> None:
-    logger.warning("eeeeee !!!!")
