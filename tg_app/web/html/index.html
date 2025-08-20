@@ -1,142 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru" data-theme="coffee">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
     <title>Lecture Manager</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css"/>
+
     <link rel="stylesheet" href="static/app.css">
+    <style>
+
+    </style>
 </head>
 <body>
-<div class="container">
-    <!-- Главное меню приложения -->
-    <div id="appMainMenu">
-        <h2 class="mb-4">Главное меню</h2>
-        <button id="speakerPanelBtn" class="btn btn-primary w-100 mb-2">Панель лектора</button>
-        <button id="listenerPanelBtn" class="btn btn-primary w-100 mb-2">Панель слушателя</button>
-        <button id="subscriptionBtn" class="btn btn-secondary w-100 mb-2">Подписка</button>
-        <button id="helpBtn" class="btn btn-secondary w-100 mb-2">Помощь</button>
+<div class="p-4 max-w-full">
+
+    <div class="flex justify-end mb-4">
+        <button id="themeToggle" class="btn btn-sm btn-outline w-full">🌙/☀️</button>
     </div>
 
-    <!-- Главное меню лектора -->
-    <div id="mainMenu" class="hidden">
-        <h2 class="mb-4">Панель лектора</h2>
-        <button id="newLectureBtn" class="btn btn-primary w-100 mb-2">Новая лекция</button>
-        <button id="openLecturesBtn" class="btn btn-secondary w-100 mb-2">Открыть лекцию</button>
-        <button id="backToMainMenuBtn" class="btn btn-outline-secondary w-100 mt-3">Назад</button>
+    <!-- Главное меню -->
+    <div id="appMainMenu" class="screen-visible">
+        <h2 class="mb-6">Главное меню</h2>
+        <div class="flex flex-col gap-3">
+            <button id="speakerPanelBtn" class="btn btn-primary w-full">Панель лектора</button>
+            <button id="listenerPanelBtn" class="btn btn-primary w-full">Панель слушателя</button>
+            <button id="subscriptionBtn" class="btn btn-secondary w-full">Подписка</button>
+            <button id="helpBtn" class="btn btn-secondary w-full">Помощь</button>
+        </div>
     </div>
 
-    <!-- Меню слушателя -->
-    <div id="listenerMenu" class="hidden">
-        <h2 class="mb-4">Панель слушателя</h2>
-        <button id="joinSpeakerBtn" class="btn btn-primary w-100 mb-2">Добавиться к лектору</button>
-        <button id="leaveLectureBtn" class="btn btn-warning w-100 mb-2">Отписаться от лекции</button>
-        <button id="leaveSpeakerBtn" class="btn btn-danger w-100 mb-2">Отписаться от лектора</button>
-        <button id="backToMainMenuFromListenerBtn" class="btn btn-outline-secondary w-100 mt-3">Назад</button>
+    <!-- Панель лектора -->
+    <div id="mainMenu" class="screen-hidden">
+        <h2 class="text-xl font-semibold text-center mb-6">Панель лектора</h2>
+        <div class="flex flex-col gap-3">
+            <button id="newLectureBtn" class="btn btn-primary w-full">Новая лекция</button>
+            <button id="openLecturesBtn" class="btn btn-secondary w-full">Открыть лекцию</button>
+            <button id="backToMainMenuBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
+    </div>
+
+    <!-- Панель слушателя -->
+    <div id="listenerMenu" class="screen-hidden">
+        <h2 class="text-xl font-semibold text-center mb-6">Панель слушателя</h2>
+        <div class="flex flex-col gap-3">
+            <button id="joinSpeakerBtn" class="btn btn-primary w-full">Добавиться к лектору</button>
+            <button id="leaveLectureBtn" class="btn btn-warning w-full">Отписаться от лекции</button>
+            <button id="leaveSpeakerBtn" class="btn btn-error w-full">Отписаться от лектора</button>
+            <button id="backToMainMenuFromListenerBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
     </div>
 
     <!-- Форма добавления к лектору -->
-    <div id="joinSpeakerForm" class="hidden">
-        <h3 class="mb-3">Добавиться к лектору</h3>
-        <div class="mb-3">
-            <label class="form-label">Выберите лектора</label>
-            <div id="speakersList" class="list-group scrollable-list"></div>
+    <div id="joinSpeakerForm" class="screen-hidden">
+        <h3 class="text-lg font-semibold text-center mb-4">Добавиться к лектору</h3>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Выберите лектора</span>
+            </label>
+            <ul id="speakersList" class="menu bg-base-200 rounded-box max-h-[50vh] overflow-y-auto"></ul>
         </div>
-        <button id="confirmJoinSpeakerBtn" class="btn btn-success">Подтвердить</button>
-        <button id="backFromJoinSpeakerBtn" class="btn btn-outline-secondary">Назад</button>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="confirmJoinSpeakerBtn" class="btn btn-success w-full">Подтвердить</button>
+            <button id="backFromJoinSpeakerBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
     </div>
 
-    <!-- Форма отписки от лекций -->
-    <div id="leaveLectureForm" class="hidden">
-        <h3 class="mb-3">Отписаться от лекции</h3>
-        <div class="mb-3">
-            <label class="form-label">Выберите лекцию для отписки</label>
-            <div id="lecturesToLeaveList" class="list-group scrollable-list"></div>
+    <!-- Форма отписки от лекции -->
+    <div id="leaveLectureForm" class="screen-hidden">
+        <h3 class="text-lg font-semibold text-center mb-4">Отписаться от лекции</h3>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Выберите лекцию</span>
+            </label>
+            <ul id="lecturesToLeaveList" class="menu bg-base-200 rounded-box max-h-[50vh] overflow-y-auto"></ul>
         </div>
-        <button id="confirmLeaveLectureBtn" class="btn btn-danger">Подтвердить</button>
-        <button id="backFromLeaveLectureBtn" class="btn btn-outline-secondary">Назад</button>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="confirmLeaveLectureBtn" class="btn btn-error w-full">Подтвердить</button>
+            <button id="backFromLeaveLectureBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
     </div>
 
     <!-- Форма отписки от лектора -->
-    <div id="leaveSpeakerForm" class="hidden">
-        <h3 class="mb-3">Отписаться от лектора</h3>
-        <div class="mb-3">
-            <label class="form-label">Выберите лектора для отписки</label>
-            <div id="speakersToLeaveList" class="list-group scrollable-list"></div>
+    <div id="leaveSpeakerForm" class="screen-hidden">
+        <h3 class="text-lg font-semibold text-center mb-4">Отписаться от лектора</h3>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Выберите лектора</span>
+            </label>
+            <ul id="speakersToLeaveList" class="menu bg-base-200 rounded-box max-h-[50vh] overflow-y-auto"></ul>
         </div>
-        <button id="confirmleaveSpeakerBtn" class="btn btn-danger">Подтвердить</button>
-        <button id="backFromleaveSpeakerBtn" class="btn btn-outline-secondary">Назад</button>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="confirmleaveSpeakerBtn" class="btn btn-error w-full">Подтвердить</button>
+            <button id="backFromleaveSpeakerBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
     </div>
 
     <!-- Форма создания лекции -->
-    <div id="newLectureForm" class="hidden">
-        <h3 id="currentEditLectureTitle" class="mb-3">Новая лекция</h3>
-        <div class="mb-3">
-            <label class="form-label">Название лекции</label>
-            <input type="text" class="form-control" id="lectureName" required>
-            <div class="invalid-feedback">Пожалуйста, введите название лекции</div>
+    <div id="newLectureForm" class="screen-hidden">
+        <h3 id="currentEditLectureTitle" class="text-lg font-semibold text-center mb-4">Новая лекция</h3>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Название лекции</span>
+            </label>
+            <input type="text" id="lectureName" class="input input-bordered w-full" required/>
+            <p class="text-error text-sm mt-1">Введите название лекции</p>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Выберите слушателей</label>
-            <div id="listenersList" class="list-group scrollable-list"></div>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Выберите слушателей</span>
+            </label>
+            <ul id="listenersList" class="menu bg-base-200 rounded-box max-h-[50vh] overflow-y-auto"></ul>
         </div>
-        <button id="saveLectureBtn" class="btn btn-success">Сохранить</button>
-        <button id="backFromNewLectureBtn" class="btn btn-outline-secondary">Назад</button>
-    </div>
-
-    <div id="editLectureForm" class="hidden">
-        <h3 id="editLectureTitle" class="mb-3">Редактирование лекции</h3>
-        <div class="mb-3">
-            <label class="form-label">Название лекции</label>
-            <input type="text" class="form-control" id="editLectureName" required>
-            <div class="invalid-feedback">Пожалуйста, введите название лекции</div>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="saveLectureBtn" class="btn btn-success w-full">Сохранить</button>
+            <button id="backFromNewLectureBtn" class="btn btn-outline w-full">Назад</button>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Выберите слушателей</label>
-            <div id="editListenersList" class="list-group scrollable-list"></div>
-        </div>
-        <button id="saveEditedLectureBtn" class="btn btn-success">Сохранить</button>
-        <button id="backFromEditLectureBtn" class="btn btn-outline-secondary">Назад</button>
-    </div>
-
-    <!-- Список лекций -->
-    <div id="lecturesList" class="hidden">
-        <h3 class="mb-3">Мои лекции</h3>
-        <div id="lecturesContainer" class="list-group scrollable-list"></div>
-        <button id="backFromLecturesBtn" class="btn btn-outline-secondary mt-3">Назад</button>
     </div>
 
     <!-- Редактирование лекции -->
-    <div id="editLectureMenu" class="hidden">
-        <h3 id="currentLectureTitle" class="mb-3"></h3>
-        <button id="newMeetingBtn" class="btn btn-primary w-100 mb-2">Новая встреча</button>
-        <button id="editListenersBtn" class="btn btn-warning w-100 mb-2">Изменить слушателей</button>
-        <button id="deleteLectureBtn" class="btn btn-danger w-100 mb-2">Удалить лекцию</button>
-        <button id="backFromEditBtn" class="btn btn-outline-secondary">Назад</button>
+    <div id="editLectureForm" class="screen-hidden">
+        <h3 id="editLectureTitle" class="text-lg font-semibold text-center mb-4">Редактирование лекции</h3>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Название лекции</span>
+            </label>
+            <input type="text" id="editLectureName" class="input input-bordered w-full" required/>
+            <p class="text-error text-sm mt-1">Введите название лекции</p>
+        </div>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Выберите слушателей</span>
+            </label>
+            <ul id="editListenersList" class="menu bg-base-200 rounded-box max-h-[50vh] overflow-y-auto"></ul>
+        </div>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="saveEditedLectureBtn" class="btn btn-success w-full">Сохранить</button>
+            <button id="backFromEditLectureBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
+    </div>
+
+    <!-- Список лекций -->
+    <div id="lecturesList" class="screen-hidden">
+        <h3 class="text-lg font-semibold text-center mb-4">Мои лекции</h3>
+        <ul id="lecturesContainer" class="menu bg-base-200 rounded-box max-h-[50vh] overflow-y-auto mb-4"></ul>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="backFromLecturesBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
+    </div>
+
+    <!-- Редактирование лекции меню -->
+    <div id="editLectureMenu" class="screen-hidden">
+        <h3 id="currentLectureTitle" class="text-lg font-semibold text-center mb-4"></h3>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="newMeetingBtn" class="btn btn-primary w-full">Новая встреча</button>
+            <button id="editListenersBtn" class="btn btn-warning w-full">Изменить слушателей</button>
+            <button id="deleteLectureBtn" class="btn btn-error w-full">Удалить лекцию</button>
+            <button id="backFromEditBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
     </div>
 
     <!-- Форма создания встречи -->
-    <div id="newMeetingForm" class="hidden">
-        <h3 id="currentMeetingLectureTitle" class="mb-3"></h3>
-        <div class="mb-3">
-            <label class="form-label">Дата и время встречи</label>
-            <input type="datetime-local" class="form-control" id="meetingDateTime" required>
-            <div class="invalid-feedback">Пожалуйста, выберите корректную дату и время (не ранее чем через 10 минут)
-            </div>
+    <div id="newMeetingForm" class="screen-hidden">
+        <h3 id="currentMeetingLectureTitle" class="text-lg font-semibold text-center mb-4"></h3>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Дата и время встречи</span>
+            </label>
+            <input type="datetime-local" id="meetingDateTime" class="input input-bordered w-full" required/>
+            <p class="text-error text-sm mt-1">Укажите корректную дату (не ранее чем через 10 минут)</p>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Длительность лекции (минут)</label>
-            <input type="number" class="form-control" id="lectureDuration" min="5" max="180" value="60" required>
-            <div class="invalid-feedback">Пожалуйста, выберите длительность от 5 до 180 минут</div>
+        <div class="mb-4">
+            <label class="label">
+                <span class="label-text">Длительность лекции (минут)</span>
+            </label>
+            <input type="number" id="lectureDuration" class="input input-bordered w-full" min="5" max="180" value="60"
+                   required/>
+            <p class="text-error text-sm mt-1">Длительность от 5 до 180 минут</p>
         </div>
-        <button id="confirmMeetingBtn" class="btn btn-success">Создать встречу</button>
-        <button id="backFromMeetingFormBtn" class="btn btn-outline-secondary">Назад</button>
+        <div class="btn-group btn-group-vertical w-full gap-3">
+            <button id="confirmMeetingBtn" class="btn btn-success w-full">Создать встречу</button>
+            <button id="backFromMeetingFormBtn" class="btn btn-outline w-full">Назад</button>
+        </div>
     </div>
-
+    <div class="fixed bottom-4 left-4 right-4">
+        <button id="footerHomeBtn" class="btn btn-outline w-full">🏠 Домой</button>
+    </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="static/app.js"></script>
 </body>
 </html>

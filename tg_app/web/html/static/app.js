@@ -1,21 +1,19 @@
+console.log('Script started');
+
 const API_CONFIG = {
-    BASE_URL: 'https://gb59jr-213-87-151-31.ru.tuna.am',
+    BASE_URL: 'https://7vhljm-213-87-89-1.ru.tuna.am',
     ENDPOINTS: {
         login: '/auth/login',
         refresh: '/auth/refresh',
-
         set_user: '/users',
         get_speakers: '/users/speakers',
         add_to_speaker: '/users/speakers/listeners',
-
         get_listeners: '/users/listeners',
         get_selected_speakers: '/users/listeners/speakers',
         remove_from_listeners: '/users/listeners/speakers',
-
         save_lecture: '/lectures',
         get_lectures: '/lectures',
         delete_lectures: '/lectures',
-
         get_listeners_from_lecture: '/lectures/listeners',
         remove_from_all_lectures: '/lectures/listeners-unsubscribe',
         remove_from_lecture: '/lectures/listeners-unsubscribe-lecture',
@@ -29,28 +27,27 @@ const API_CONFIG = {
     }
 };
 
-// Инициализация Telegram WebApp
 const initTelegramWebApp = () => {
     if (!window.Telegram?.WebApp) {
         console.warn("Telegram WebApp not detected! Running in debug mode");
         window.Telegram = {
             WebApp: {
-                initData: 'debug_user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Debug%22%2C%22last_name%22%3A%22User%22%2C%22username%22%3A%22debug_user%22%2C%22language_code%22%3A%22en%22%2C%22allows_write_to_pm%22%3Atrue%7D',
+                initData: 'user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Debug%22%2C%22last_name%22%3A%22User%22%2C%22username%22%3A%22debug_user%22%2C%22language_code%22%3A%22ru%22%2C%22allows_write_to_pm%22%3Atrue%7D',
                 expand: () => console.debug("Telegram.WebApp.expand()"),
                 showAlert: (msg) => alert(`ALERT: ${msg}`),
-                ready: (callback) => callback(),
+                ready: (callback) => callback && callback(),
                 close: () => console.debug("WebApp closed"),
                 isExpanded: true,
                 colorScheme: 'light',
                 version: '6.0',
-                platform: 'unknown'
+                platform: 'web',
+                onEvent: () => {}
             }
         };
     }
     return window.Telegram.WebApp;
 };
 
-// Получение пользовательских данных
 const getTelegramUserData = (webApp) => {
     if (!webApp?.initData) {
         console.warn("No initData in Telegram WebApp");
@@ -71,16 +68,32 @@ const getTelegramUserData = (webApp) => {
     }
 };
 
-// Инициализация приложения
-const tg = initTelegramWebApp();
-const userData = getTelegramUserData(tg);
-const userId = userData?.id || null;
+const Theme = {
+    key: 'theme',
+    defaultFromTelegram() {
+        try {
+            const scheme = tg?.colorScheme || 'light';
+            return scheme === 'dark' ? 'dark' : 'light';
+        } catch { return 'light'; }
+    },
+    apply(theme) {
+        const t = theme || localStorage.getItem(this.key) || this.defaultFromTelegram();
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem(this.key, t);
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+        return t;
+    },
+    toggle() {
+        const current = document.documentElement.getAttribute('data-theme') || this.defaultFromTelegram();
+        const next = current === 'dark' ? 'light' : 'dark';
+        return this.apply(next);
+    },
+    init() {
+        this.apply();
+    }
+};
 
-console.log('Telegram WebApp initialized:', tg);
-console.log('User data:', userData);
-console.log('User ID:', userId);
-
-// JWT сервис
 const JwtService = {
     accessToken: localStorage.getItem('accessToken') || null,
     refreshToken: localStorage.getItem('refreshToken') || null,
@@ -100,7 +113,7 @@ const JwtService = {
 
         console.log('Tokens updated', {
             access: this.accessToken,
-            refresh: this.refreshToken, // Используем текущее значение (новое или старое)
+            refresh: this.refreshToken,
             tokenType: tokenInfo.token_type || 'Bearer'
         });
     },
@@ -158,7 +171,6 @@ const JwtService = {
     }
 };
 
-// Auth сервис
 const AuthService = {
     async login() {
         try {
@@ -215,14 +227,11 @@ const AuthService = {
     }
 };
 
-// Сервис API
 const ApiService = {
     async request(endpoint, {method = 'GET', params = {}, data} = {}) {
         console.log(`API request to ${endpoint}`, {method, params, data});
 
-        // Для эндпоинтов login и refresh не проверяем авторизацию
         if (!['login', 'refresh'].includes(endpoint)) {
-            // Проверяем наличие токена
             if (!JwtService.accessToken) {
                 console.log('No access token, attempting login');
                 if (!await AuthService.login()) {
@@ -249,7 +258,6 @@ const ApiService = {
 
             console.log(`Response status for ${endpoint}:`, response.status);
 
-            // Если 401 - пробуем обновить токен только один раз
             if (response.status === 401) {
                 console.log('Received 401, attempting token refresh');
                 if (await JwtService.refresh()) {
@@ -262,7 +270,6 @@ const ApiService = {
                         },
                         body: data ? JSON.stringify(data) : undefined
                     });
-
                     console.log(`Retry response status for ${endpoint}:`, response.status);
                 } else {
                     throw new Error('Session expired');
@@ -300,35 +307,24 @@ const ApiService = {
     }
 };
 
-// DOM элементы
 const DOM = {
     appMainMenu: document.getElementById('appMainMenu'),
+    mainMenu: document.getElementById('mainMenu'),
+    listenerMenu: document.getElementById('listenerMenu'),
+    joinSpeakerForm: document.getElementById('joinSpeakerForm'),
+    leaveSpeakerForm: document.getElementById('leaveSpeakerForm'),
+    newLectureForm: document.getElementById('newLectureForm'),
+    lecturesList: document.getElementById('lecturesList'),
+    editLectureMenu: document.getElementById('editLectureMenu'),
+    editLectureForm: document.getElementById('editLectureForm'),
+    newMeetingForm: document.getElementById('newMeetingForm'),
+    leaveLectureForm: document.getElementById('leaveLectureForm'),
     speakerPanelBtn: document.getElementById('speakerPanelBtn'),
     listenerPanelBtn: document.getElementById('listenerPanelBtn'),
     subscriptionBtn: document.getElementById('subscriptionBtn'),
     helpBtn: document.getElementById('helpBtn'),
-    listenerMenu: document.getElementById('listenerMenu'),
-    joinSpeakerBtn: document.getElementById('joinSpeakerBtn'),
-    leaveSpeakerBtn: document.getElementById('leaveSpeakerBtn'),
     backToMainMenuBtn: document.getElementById('backToMainMenuBtn'),
     backToMainMenuFromListenerBtn: document.getElementById('backToMainMenuFromListenerBtn'),
-    joinSpeakerForm: document.getElementById('joinSpeakerForm'),
-    leaveSpeakerForm: document.getElementById('leaveSpeakerForm'),
-    speakersList: document.getElementById('speakersList'),
-    speakersToLeaveList: document.getElementById('speakersToLeaveList'),
-    confirmJoinSpeakerBtn: document.getElementById('confirmJoinSpeakerBtn'),
-    confirmleaveSpeakerBtn: document.getElementById('confirmleaveSpeakerBtn'),
-    backFromJoinSpeakerBtn: document.getElementById('backFromJoinSpeakerBtn'),
-    backFromleaveSpeakerBtn: document.getElementById('backFromleaveSpeakerBtn'),
-    mainMenu: document.getElementById('mainMenu'),
-    newLectureForm: document.getElementById('newLectureForm'),
-    lecturesList: document.getElementById('lecturesList'),
-    editLectureMenu: document.getElementById('editLectureMenu'),
-    listenersList: document.getElementById('listenersList'),
-    lecturesContainer: document.getElementById('lecturesContainer'),
-    lectureNameInput: document.getElementById('lectureName'),
-    currentLectureTitle: document.getElementById('currentLectureTitle'),
-    currentEditLectureTitle: document.getElementById('currentEditLectureTitle'),
     newLectureBtn: document.getElementById('newLectureBtn'),
     openLecturesBtn: document.getElementById('openLecturesBtn'),
     saveLectureBtn: document.getElementById('saveLectureBtn'),
@@ -338,26 +334,37 @@ const DOM = {
     backFromEditBtn: document.getElementById('backFromEditBtn'),
     editListenersBtn: document.getElementById('editListenersBtn'),
     newMeetingBtn: document.getElementById('newMeetingBtn'),
-    newMeetingForm: document.getElementById('newMeetingForm'),
-    meetingDateTime: document.getElementById('meetingDateTime'),
     confirmMeetingBtn: document.getElementById('confirmMeetingBtn'),
     backFromMeetingFormBtn: document.getElementById('backFromMeetingFormBtn'),
-    currentMeetingLectureTitle: document.getElementById('currentMeetingLectureTitle'),
-    lectureDuration: document.getElementById('lectureDuration'),
-    editLectureForm: document.getElementById('editLectureForm'),
-    editLectureTitle: document.getElementById('editLectureTitle'),
-    editLectureNameInput: document.getElementById('editLectureName'),
-    editListenersList: document.getElementById('editListenersList'),
-    saveEditedLectureBtn: document.getElementById('saveEditedLectureBtn'),
-    backFromEditLectureBtn: document.getElementById('backFromEditLectureBtn'),
+    joinSpeakerBtn: document.getElementById('joinSpeakerBtn'),
+    leaveSpeakerBtn: document.getElementById('leaveSpeakerBtn'),
+    confirmJoinSpeakerBtn: document.getElementById('confirmJoinSpeakerBtn'),
+    confirmleaveSpeakerBtn: document.getElementById('confirmleaveSpeakerBtn'),
+    backFromJoinSpeakerBtn: document.getElementById('backFromJoinSpeakerBtn'),
+    backFromleaveSpeakerBtn: document.getElementById('backFromleaveSpeakerBtn'),
     leaveLectureBtn: document.getElementById('leaveLectureBtn'),
-    leaveLectureForm: document.getElementById('leaveLectureForm'),
-    lecturesToLeaveList: document.getElementById('lecturesToLeaveList'),
     confirmLeaveLectureBtn: document.getElementById('confirmLeaveLectureBtn'),
     backFromLeaveLectureBtn: document.getElementById('backFromLeaveLectureBtn'),
+    themeToggle: document.getElementById('themeToggle'),
+    speakersList: document.getElementById('speakersList'),
+    speakersToLeaveList: document.getElementById('speakersToLeaveList'),
+    listenersList: document.getElementById('listenersList'),
+    lecturesContainer: document.getElementById('lecturesContainer'),
+    lecturesToLeaveList: document.getElementById('lecturesToLeaveList'),
+    editListenersList: document.getElementById('editListenersList'),
+    lectureNameInput: document.getElementById('lectureName'),
+    currentLectureTitle: document.getElementById('currentLectureTitle'),
+    meetingDateTime: document.getElementById('meetingDateTime'),
+    lectureDuration: document.getElementById('lectureDuration'),
+    currentMeetingLectureTitle: document.getElementById('currentMeetingLectureTitle'),
+    editLectureTitle: document.getElementById('editLectureTitle'),
+    currentEditLectureTitle: document.getElementById('currentEditLectureTitle'),
+    editLectureNameInput: document.getElementById('editLectureName'),
+    saveEditedLectureBtn: document.getElementById('saveEditedLectureBtn'),
+    backFromEditLectureBtn: document.getElementById('backFromEditLectureBtn'),
+    footerHomeBtn: document.getElementById('footerHomeBtn')
 };
 
-// Менеджер слушателей
 const ListenerManager = {
     async fetchMyLectures() {
         try {
@@ -367,20 +374,20 @@ const ListenerManager = {
             if (!data?.lectures) return;
 
             DOM.lecturesToLeaveList.innerHTML = data.lectures.map(lecture => `
-            <div class="list-group-item d-flex align-items-center">
-                <div class="form-check flex-grow-1">
-                    <input class="form-check-input" type="radio" 
-                           name="lecture" 
-                           id="lecture-${lecture.id}" 
-                           value="${lecture.id}_${lecture.name}">
-                    <label class="form-check-label ms-2" for="lecture-${lecture.id}">
-                        ${lecture.name || 'No name'}
-                            <span class="text-muted small">@${lecture.speaker?.username || ''}
-                            (${lecture.speaker?.first_name || ''} ${lecture.speaker?.last_name || ''} )</span>
+                <li>
+                    <label class="flex items-center gap-3 p-3 cursor-pointer hover:bg-base-300 rounded-lg">
+                        <input type="radio" name="lecture" class="radio radio-primary radio-xs" 
+                               value="${lecture.id}_${lecture.name}" />
+                        <div>
+                            <div class="font-semibold">${lecture.name || 'No name'}</div>
+                            <div class="text-xs opacity-70">
+                                @${lecture.speaker?.username || ''}
+                                (${lecture.speaker?.first_name || ''} ${lecture.speaker?.last_name || ''})
+                            </div>
+                        </div>
                     </label>
-                </div>
-            </div>
-        `).join('');
+                </li>
+            `).join('');
         } catch (error) {
             console.error('Failed to fetch listener lectures:', error);
             tg.showAlert('Ошибка загрузки ваших лекций');
@@ -409,6 +416,7 @@ const ListenerManager = {
             tg.showAlert('Ошибка отписки от лекции');
         }
     },
+
     async fetchSpeakers() {
         try {
             const [speakersData, selectedSpeakersData] = await Promise.all([
@@ -423,18 +431,18 @@ const ListenerManager = {
             DOM.speakersList.innerHTML = speakersData.speakers.map(speaker => {
                 const isSelected = selectedSpeakerIds.includes(speaker.id);
                 return `
-                    <div class="list-group-item d-flex align-items-center">
-                        <div class="form-check flex-grow-1">
-                            <input class="form-check-input" type="radio" name="speaker" 
-                                  id="speaker-${speaker.id}" value="${speaker.id}"
-                                  ${isSelected ? 'disabled' : ''}>
-                            <label class="form-check-label ms-2" for="speaker-${speaker.id}" 
-                                  ${isSelected ? 'style="opacity: 0.5;"' : ''}>
-                                ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
-                                ${isSelected ? ' ✅' : ''}
-                            </label>
-                        </div>
-                    </div>
+                    <li class="${isSelected ? 'bg-base-300' : ''}">
+                        <label class="flex items-center gap-3 p-3 cursor-pointer ${isSelected ? 'opacity-60' : ''}">
+                            <input type="radio" name="speaker" class="radio radio-primary radio-xs" 
+                                   value="${speaker.id}" ${isSelected ? 'disabled' : ''} />
+                            <div>
+                                <div class="font-semibold">
+                                    ${speaker.username} ${speaker.full_name ? `(${speaker.full_name})` : ''}
+                                    ${isSelected ? ' ✅' : ''}
+                                </div>
+                            </div>
+                        </label>
+                    </li>
                 `;
             }).join('');
         } catch (error) {
@@ -451,18 +459,18 @@ const ListenerManager = {
             if (!data?.speakers) return;
 
             DOM.speakersToLeaveList.innerHTML = data.speakers.map(speaker => `
-                <div class="list-group-item d-flex align-items-center">
-                    <div class="form-check flex-grow-1">
-                        <input class="form-check-input" type="radio" 
-                               name="speaker" 
-                               id="speaker-${speaker.id}" 
-                               value="${speaker.id}">
-                        <label class="form-check-label ms-2" for="speaker-${speaker.id}">
-                            ${speaker.username || 'No username'} 
-                            (${speaker.full_name || 'No name'})
-                        </label>
-                    </div>
-                </div>
+                <li>
+                    <label class="flex items-center gap-3 p-3 cursor-pointer hover:bg-base-300 rounded-lg">
+                        <input type="radio" name="speaker" class="radio radio-primary radio-xs" 
+                               value="${speaker.id}" />
+                        <div>
+                            <div class="font-semibold">
+                                ${speaker.username || 'No username'} 
+                                (${speaker.full_name || 'No name'})
+                            </div>
+                        </div>
+                    </label>
+                </li>
             `).join('');
         } catch (error) {
             console.error('Failed to fetch listener lectures:', error);
@@ -489,7 +497,7 @@ const ListenerManager = {
             }
         } catch (error) {
             console.error('Join speaker error:', error);
-            tg.showAlert('Ошибка добавления к лектору');
+            tg.showAlert('Ошибка добавления к лектору.');
         }
     },
 
@@ -517,7 +525,6 @@ const ListenerManager = {
     }
 };
 
-// Менеджер лекций
 const LectureManager = {
     currentLectureName: '',
 
@@ -535,16 +542,16 @@ const LectureManager = {
             const currentListeners = lectureData?.listeners?.map(l => l.id) || [];
 
             DOM.editListenersList.innerHTML = allListeners.listeners.map(listener => `
-                <div class="list-group-item d-flex align-items-center">
-                    <div class="form-check flex-grow-1">
-                        <input class="form-check-input" type="checkbox" 
-                              id="edit-listener-${listener.id}"
-                              ${currentListeners.includes(listener.id) ? 'checked' : ''}>
-                        <label class="form-check-label ms-2" for="edit-listener-${listener.id}">
+                <li>
+                    <label class="flex items-center gap-3 p-3 cursor-pointer hover:bg-base-300 rounded-lg">
+                        <input type="checkbox" class="checkbox checkbox-primary checkbox-xs" 
+                               id="edit-listener-${listener.id}"
+                               ${currentListeners.includes(listener.id) ? 'checked' : ''} />
+                        <div class="font-semibold">
                             ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
-                        </label>
-                    </div>
-                </div>
+                        </div>
+                    </label>
+                </li>
             `).join('');
 
             DOM.editLectureTitle.textContent = `Редактирование: ${this.currentLectureName}`;
@@ -560,10 +567,10 @@ const LectureManager = {
             const lectureName = DOM.editLectureNameInput.value.trim();
             if (!lectureName) {
                 tg.showAlert('Введите название лекции!');
-                DOM.editLectureNameInput.classList.add('is-invalid');
+                DOM.editLectureNameInput.classList.add('input-error');
                 return;
             }
-            DOM.editLectureNameInput.classList.remove('is-invalid');
+            DOM.editLectureNameInput.classList.remove('input-error');
 
             const selectedListeners = Array.from(
                 document.querySelectorAll('#editListenersList input[type="checkbox"]:checked')
@@ -598,15 +605,15 @@ const LectureManager = {
             if (!data?.listeners) return;
 
             DOM.listenersList.innerHTML = data.listeners.map(listener => `
-                <div class="list-group-item d-flex align-items-center">
-                    <div class="form-check flex-grow-1">
-                        <input class="form-check-input" type="checkbox" 
-                              id="listener-${listener.id}">
-                        <label class="form-check-label ms-2" for="listener-${listener.id}">
+                <li>
+                    <label class="flex items-center gap-3 p-3 cursor-pointer hover:bg-base-300 rounded-lg">
+                        <input type="checkbox" class="checkbox checkbox-primary checkbox-xs" 
+                               id="listener-${listener.id}" />
+                        <div class="font-semibold">
                             ${listener.username} ${listener.full_name ? `(${listener.full_name})` : ''}
-                        </label>
-                    </div>
-                </div>
+                        </div>
+                    </label>
+                </li>
             `).join('');
         } catch (error) {
             console.error('Fetch listeners error:', error);
@@ -622,13 +629,20 @@ const LectureManager = {
             if (!data?.lectures) return;
 
             DOM.lecturesContainer.innerHTML = data.lectures.map(lecture => `
-                <div class="list-group-item lecture-card">
-                    <h5>${lecture.name}</h5>
-                    <button class="btn btn-sm btn-primary" 
-                            data-lecture="${encodeURIComponent(lecture.name)}">
-                        Открыть
-                    </button>
-                </div>
+                <li>
+                    <div class="flex justify-between items-center p-3 hover:bg-base-300 rounded-lg">
+                        <div>
+                            <div class="font-semibold">${lecture.name}</div>
+                            <div class="text-xs opacity-70">
+                                @${lecture.speaker?.username || ''}
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" 
+                                data-lecture="${encodeURIComponent(lecture.name)}">
+                            Открыть
+                        </button>
+                    </div>
+                </li>
             `).join('');
 
             DOM.lecturesContainer.querySelectorAll('[data-lecture]').forEach(button => {
@@ -653,10 +667,10 @@ const LectureManager = {
             const lectureName = DOM.lectureNameInput.value.trim();
             if (!lectureName) {
                 tg.showAlert('Введите название лекции!');
-                DOM.lectureNameInput.classList.add('is-invalid');
+                DOM.lectureNameInput.classList.add('input-error');
                 return;
             }
-            DOM.lectureNameInput.classList.remove('is-invalid');
+            DOM.lectureNameInput.classList.remove('input-error');
 
             const selectedListeners = Array.from(
                 document.querySelectorAll('#listenersList input[type="checkbox"]:checked')
@@ -713,8 +727,8 @@ const LectureManager = {
 
         DOM.meetingDateTime.min = formattedDateTime;
         DOM.meetingDateTime.value = formattedDateTime;
-        DOM.meetingDateTime.classList.remove('is-invalid');
-        DOM.lectureDuration.classList.remove('is-invalid');
+        DOM.meetingDateTime.classList.remove('input-error');
+        DOM.lectureDuration.classList.remove('input-error');
     },
 
     async createMeeting() {
@@ -725,12 +739,12 @@ const LectureManager = {
 
             const duration = parseInt(DOM.lectureDuration.value) || 60;
             if (duration < 5 || duration > 180) {
-                DOM.lectureDuration.classList.add('is-invalid');
+                DOM.lectureDuration.classList.add('input-error');
                 tg.showAlert('Длительность должна быть от 5 до 180 минут');
                 return false;
             }
             if (!DOM.meetingDateTime.value || selectedDateTime < minDateTime) {
-                DOM.meetingDateTime.classList.add('is-invalid');
+                DOM.meetingDateTime.classList.add('input-error');
                 tg.showAlert('Выберите время не ранее чем через 10 минут');
                 return false;
             }
@@ -761,7 +775,6 @@ const LectureManager = {
     }
 };
 
-// Навигация
 const Navigation = {
     screens: [
         'appMainMenu', 'mainMenu', 'listenerMenu',
@@ -776,25 +789,21 @@ const Navigation = {
             return;
         }
 
-        // Скрываем все экраны
         this.screens.forEach(screenName => {
-            const element = DOM[screenName];
+            const element = document.getElementById(screenName);
             if (element) {
                 element.classList.add('hidden');
-            } else if (screenName !== 'currentMeetingLectureTitle') {
-                console.warn(`DOM element ${screenName} not found`);
             }
         });
 
-        // Показываем запрошенный экран
-        if (DOM[screen]) {
-            DOM[screen].classList.remove('hidden');
+        const targetScreen = document.getElementById(screen);
+        if (targetScreen) {
+            targetScreen.classList.remove('hidden');
         } else {
-            console.error(`Screen ${screen} not found in DOM`);
+            console.error(`Screen ${screen} not found`);
             return;
         }
 
-        // Инициализация экрана
         switch (screen) {
             case 'newLectureForm':
                 DOM.currentEditLectureTitle.textContent = 'Новая лекция';
@@ -847,38 +856,42 @@ const Navigation = {
     }
 };
 
-// Инициализация приложения
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('App initializing...');
+    console.log('saveEditedLectureBtn after DOM loaded:', document.getElementById('saveEditedLectureBtn'));
 
-    // Инициализация Telegram WebApp
+    // Инициализация глобальных переменных
+    window.tg = initTelegramWebApp();
+    window.userData = getTelegramUserData(tg);
+    window.userId = userData?.id || null;
+
+    console.log('Telegram WebApp initialized:', tg);
+    console.log('User data:', userData);
+    console.log('User ID:', userId);
+
+    Theme.init();
+
     tg.expand();
     tg.ready();
 
     try {
         console.log('Authentication process started');
 
-        // 1. Проверяем наличие токенов
         const hasValidTokens = JwtService.accessToken && JwtService.refreshToken;
         console.log('Initial token state:', {
             accessToken: !!JwtService.accessToken,
             refreshToken: !!JwtService.refreshToken
         });
 
-        // 2. Если токены есть, просто продолжаем (валидность проверится при первом запросе)
         if (hasValidTokens) {
             console.log('Found existing tokens, proceeding');
-        }
-        // 3. Если есть только refresh token, пробуем обновить
-        else if (JwtService.refreshToken) {
+        } else if (JwtService.refreshToken) {
             console.log('Attempting token refresh');
             if (!await JwtService.refresh()) {
                 console.log('Token refresh failed, performing full login');
                 await performLogin();
             }
-        }
-        // 4. Если токенов нет, делаем полный логин
-        else {
+        } else {
             console.log('No tokens found, performing full login');
             await performLogin();
         }
@@ -902,47 +915,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setupEventListeners() {
-    // Главное меню
-    DOM.speakerPanelBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
-    DOM.listenerPanelBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
-    DOM.subscriptionBtn?.addEventListener('click', () => tg.showAlert('Функционал подписки в разработке'));
-    DOM.helpBtn?.addEventListener('click', () => tg.showAlert('Помощь: используйте меню для навигации'));
-
-    // Меню лектора
-    DOM.newLectureBtn?.addEventListener('click', () => Navigation.show('newLectureForm'));
-    DOM.openLecturesBtn?.addEventListener('click', () => Navigation.show('lecturesList'));
-    DOM.backToMainMenuBtn?.addEventListener('click', () => Navigation.show('appMainMenu'));
-
-    // Меню слушателя
-    DOM.joinSpeakerBtn?.addEventListener('click', () => Navigation.show('joinSpeakerForm'));
-    DOM.leaveSpeakerBtn?.addEventListener('click', () => Navigation.show('leaveSpeakerForm'));
-    DOM.backToMainMenuFromListenerBtn?.addEventListener('click', () => Navigation.show('appMainMenu'));
-
-    // Формы слушателя
-    DOM.confirmJoinSpeakerBtn?.addEventListener('click', () => ListenerManager.joinSpeaker());
-    DOM.confirmleaveSpeakerBtn?.addEventListener('click', () => ListenerManager.leaveSpeaker());
-    DOM.backFromJoinSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
-    DOM.backFromleaveSpeakerBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
-    DOM.leaveLectureBtn?.addEventListener('click', () => Navigation.show('leaveLectureForm'));
-    DOM.confirmLeaveLectureBtn?.addEventListener('click', () => ListenerManager.leaveLecture());
-    DOM.backFromLeaveLectureBtn?.addEventListener('click', () => Navigation.show('listenerMenu'));
-
-    // Лекции
-    DOM.saveLectureBtn?.addEventListener('click', () => LectureManager.saveLecture());
-    DOM.backFromNewLectureBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
-    DOM.backFromLecturesBtn?.addEventListener('click', () => Navigation.show('mainMenu'));
-    DOM.deleteLectureBtn?.addEventListener('click', () => LectureManager.deleteLecture());
-    DOM.backFromEditBtn?.addEventListener('click', () => Navigation.show('lecturesList'));
-    DOM.editListenersBtn?.addEventListener('click', () => LectureManager.editLectureListeners());
-    DOM.saveEditedLectureBtn?.addEventListener('click', () => LectureManager.saveEditedLecture());
-    DOM.backFromEditLectureBtn?.addEventListener('click', () => Navigation.show('editLectureMenu'));
-
-    // Встречи
-    DOM.newMeetingBtn?.addEventListener('click', () => Navigation.show('newMeetingForm'));
-    DOM.confirmMeetingBtn?.addEventListener('click', async () => {
+    DOM.speakerPanelBtn.addEventListener('click', () => Navigation.show('mainMenu'));
+    DOM.listenerPanelBtn.addEventListener('click', () => Navigation.show('listenerMenu'));
+    DOM.subscriptionBtn.addEventListener('click', () => tg.showAlert('Функционал подписки в разработке'));
+    DOM.helpBtn.addEventListener('click', () => tg.showAlert('Помощь: используйте меню для навигации'));
+    DOM.themeToggle.addEventListener('click', () => Theme.toggle());
+    DOM.newLectureBtn.addEventListener('click', () => Navigation.show('newLectureForm'));
+    DOM.openLecturesBtn.addEventListener('click', () => Navigation.show('lecturesList'));
+    DOM.backToMainMenuBtn.addEventListener('click', () => Navigation.show('appMainMenu'));
+    DOM.joinSpeakerBtn.addEventListener('click', () => Navigation.show('joinSpeakerForm'));
+    DOM.leaveSpeakerBtn.addEventListener('click', () => Navigation.show('leaveSpeakerForm'));
+    DOM.backToMainMenuFromListenerBtn.addEventListener('click', () => Navigation.show('appMainMenu'));
+    DOM.confirmJoinSpeakerBtn.addEventListener('click', () => ListenerManager.joinSpeaker());
+    DOM.confirmleaveSpeakerBtn.addEventListener('click', () => ListenerManager.leaveSpeaker());
+    DOM.backFromJoinSpeakerBtn.addEventListener('click', () => Navigation.show('listenerMenu'));
+    DOM.backFromleaveSpeakerBtn.addEventListener('click', () => Navigation.show('listenerMenu'));
+    DOM.leaveLectureBtn.addEventListener('click', () => Navigation.show('leaveLectureForm'));
+    DOM.confirmLeaveLectureBtn.addEventListener('click', () => ListenerManager.leaveLecture());
+    DOM.backFromLeaveLectureBtn.addEventListener('click', () => Navigation.show('listenerMenu'));
+    DOM.saveLectureBtn.addEventListener('click', () => LectureManager.saveLecture());
+    DOM.backFromNewLectureBtn.addEventListener('click', () => Navigation.show('mainMenu'));
+    DOM.backFromLecturesBtn.addEventListener('click', () => Navigation.show('mainMenu'));
+    DOM.deleteLectureBtn.addEventListener('click', () => LectureManager.deleteLecture());
+    DOM.backFromEditBtn.addEventListener('click', () => Navigation.show('lecturesList'));
+    DOM.editListenersBtn.addEventListener('click', () => LectureManager.editLectureListeners());
+    DOM.saveEditedLectureBtn.addEventListener('click', () => LectureManager.saveEditedLecture());
+    DOM.backFromEditLectureBtn.addEventListener('click', () => Navigation.show('editLectureMenu'));
+    DOM.newMeetingBtn.addEventListener('click', () => Navigation.show('newMeetingForm'));
+    DOM.confirmMeetingBtn.addEventListener('click', async () => {
         if (await LectureManager.createMeeting()) {
             Navigation.show('editLectureMenu');
         }
     });
-    DOM.backFromMeetingFormBtn?.addEventListener('click', () => Navigation.show('editLectureMenu'));
+    DOM.backFromMeetingFormBtn.addEventListener('click', () => Navigation.show('editLectureMenu'));
+    DOM.footerHomeBtn.addEventListener('click', () => Navigation.show('appMainMenu'));
 }
